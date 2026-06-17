@@ -1,0 +1,24 @@
+:root {
+  --brand-color-orange: #FF8E3C;
+  --brand-color-pink: #FF6B6B;
+
+  --bg-color: #FFFDF9;
+  --footer-color: #F5F3F0;
+
+  --brand-color-brown: #4A3728;
+  --brand-color-white: #FFFFFF;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.bg-image-square {
+  padding-top: 100%;
+  border-radius: 15px;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
