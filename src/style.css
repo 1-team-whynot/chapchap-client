@@ -1,0 +1,13 @@
+:root {
+  --brand-main-color: #FF8E3C;
+  --brand-point-color: #FF6B6B;
+  --brand-font-color: #4A3728;
+  --brand-white-FFFFFF-color: #FFFFFF;
+  --brand-white-F5F3F0-color: #F5F3F0;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
