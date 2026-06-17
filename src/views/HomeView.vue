@@ -1,21 +1,60 @@
 <script setup>
-// 추천 트럭 (나중에 API로 교체)
-const trucks = [
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import axios from 'axios'
+import CardComp from '../components/CardComp.vue'
+
+const router = useRouter()
+
+
+// 임시 트럭 데이터
+const trucks = ref([
   {
+    id: 1,
     name: '오리지널 타코 하우스',
     desc: '전통 방식 그대로의 핸드메이드 또띠아와 육즙 가득한 까르니따스를 제공합니다.',
     rating: 4.8,
     badge: '진행중',
   },
   {
+    id: 2,
     name: '나폴리 화덕 피자',
     desc: '장작 화덕에서 구워낸 정통 나폴리 피자를 행사 현장에서 바로 구워 드립니다.',
     rating: 5.0,
     badge: '한정',
   },
-]
+])
 
-// 선택 이유
+// API 요청 중인지 나타내는 로딩 상태
+const isLoading = ref(false)
+
+onMounted(async () => {
+  // 컴포넌트가 화면에 표시되면 추천 푸드트럭 데이터를 조회
+  isLoading.value = true
+
+  try {
+    // 백엔드에 추천 푸드트럭 목록 요청
+    const res = await axios.get('/api/trucks/recommended')
+
+    // 응답받은 데이터를 화면에 사용할 trucks 상태에 저장
+    trucks.value = res.data
+
+  } catch (error) {
+    // API 요청 실패 시 오류 확인
+    console.error('추천 푸드트럭 조회 실패:', error)
+
+  } finally {
+    // 요청 성공 여부와 관계없이 로딩 상태 종료
+    isLoading.value = false
+  }
+})
+
+// 트럭 상세보기 페이지로 이동하는 함수
+const goToTruckList = () => {
+  router.push('/trucks')  // /trucks 경로로 페이지 이동 나중에 router.js에 경로 추가 필요
+}
+
+// 맨 밑에 동그란거 안에 들어갈 데이터들
 const reasons = [
   { title: 'Fast Matching', desc: '빠른 매칭' },
   { title: 'Local Only', desc: '대구·경북 전문' },
@@ -41,22 +80,18 @@ const reasons = [
       <section class="truck-section">
         <div class="section-head">
           <p class="eyebrow">TRUCK</p>
-          <a class="view-all">전체보기 ›</a>
+          <a class="view-all" @click="goToTruckList">전체보기 ›</a>
         </div>
         <div class="truck-list">
-          <article class="card" v-for="t in trucks" :key="t.name">
-            <div class="card-img"><span class="badge">{{ t.badge }}</span></div>
-            <div class="text-button-box">
-              <div class="text-box">
-                <h4>{{ t.name }}</h4>
-                <span class="desc">{{ t.desc }}</span>
-              </div>
-              <div class="button-box">
-                <span class="rating">★ {{ t.rating }}</span>
-                <button class="btn-primary btn-primary-sm ">예약하기</button>
-              </div>
-            </div>
-          </article>
+          <CardComp
+            v-for="t in trucks"
+            :key="t.id"
+            :id="t.id"
+            :name="t.name"
+            :desc="t.desc"
+            :rating="t.rating"
+            :badge="t.badge"
+          />
         </div>
       </section>
 
@@ -84,11 +119,6 @@ const reasons = [
 }
 
 .page {
-  --accent: #ff7a1a;
-  --accent-2: #ff9d4d;
-  --muted: #8a8f98;
-  --line: #ededed;
-  --soft: #fff6ef;
   background: #FFFDF9;
   color: #4A3728;
 }
@@ -101,23 +131,6 @@ const reasons = [
   padding-left: 24px;
   padding-right: 24px;
 }
-
-/* 버튼 */
-.btn-primary {
-  border: none;
-  border-radius: 10px;
-  background-color: var(--brand-color-orange); 
-  color: #fff;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.btn-primary-sm {
-  padding: 8px 14px; 
-  font-size: 13px; 
-  box-shadow: 2px 4px 2px rgba(0, 0, 0, 0.37);
-}
-
 
 /* 히어로 */
 .hero-section {
@@ -136,10 +149,6 @@ const reasons = [
 
 .hero-text .accent { 
   color: var(--brand-color-orange); 
-}
-
-.hero-text .btn-primary { 
-  margin-top: 28px; 
 }
 
 .hero-img {
@@ -170,72 +179,9 @@ const reasons = [
 }
 
 /* 추천 트럭 카드 */
-.truck-list { 
-  display: flex; 
-  gap: 24px; 
-}
-
-.card {
-  flex: 1;
+.truck-list {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 14px;
-}
-
-.card-img {
-  position: relative; /* 뱃지의 위치를 조정하기위해 뱃지의 부모인 카드이미지에게 릴렉티브 요소를 부여함 */
-  width: auto;
-  height: 250px;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-image: url(/public/Pizza\ Truck.svg);
-  flex-shrink: 0; /* 화면이 줄어도 사진이 찌그러짐을 방지하기 위해 사용함 */
-  border-radius: 12px;
-  /* background: linear-gradient(135deg, #e9e4dd, #cfd8d6); 이미지로 교체 */
-}
-
-.badge { /* 안쓸거라면 삭제 */
-  position: absolute; top: 8px; left: 8px;
-  background: rgba(0,0,0,0.55); 
-  color: #fff;
-  font-size: 11px; 
-  padding: 3px 8px; 
-  border-radius: 6px;
-}
-
-.text-button-box { 
-  display: flex; 
-  flex-direction: column; 
-  justify-content: space-between; 
-  flex: 1; 
-}
-
-.text-box h4 { 
-  font-size: 16px; 
-  margin-bottom: 6px; /* 마진 바텀이 없다면 텍스트가 너무 붙어있음 */
-}
-
-.text-box .desc { 
-  font-size: 13px; 
-  line-height: 1.5; 
-}
-
-.button-box { 
-  display: flex; 
-  align-items: center; 
-  justify-content: space-between; 
-  margin-top: 12px; 
-  
-}
-
-.rating { /* 리뷰 점수 */
-  font-size: 14px; 
-  font-weight: 700; 
-  color: var(--brand-color-orange); 
+  gap: 24px;
 }
 
 /* 선택 이유 */
