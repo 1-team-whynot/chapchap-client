@@ -1,17 +1,19 @@
 <script setup>
-import ButtonComp from "./ButtonComp.vue";
-import InputSearchComp from "./InputSearchComp.vue";
+import ButtonComp from "./buttons/ButtonComp.vue";
+import InputSearchComp from "./inputs/InputSearchComp.vue";
 import {ref} from "vue";
 
 const searchText = ref(null);
 
 const searchIcon = '/icons/search-icon.svg';
+const logo = '/icons/sangdari-logo.png';
 </script>
 
 <template>
   <div class="header-container">
     <div class="header-left-container">
-      <h1 class="header-title">챱챱</h1>
+      <h1 class="header-title"></h1>
+      <img :src="logo" alt="" width="120px" height="70px"/>
       <div class="nav-bar">
         <a href="" class="nav-font">트럭 찾기</a>
         <a href="" class="nav-font">내 요청</a>
@@ -55,8 +57,8 @@ const searchIcon = '/icons/search-icon.svg';
   display: flex;
   justify-content: space-between;
   padding: 15px 100px;
-  border-bottom: 2px solid var(--brand-white-F5F3F0-color);
-  background-color: var(--brand-white-FFFFFF-color);
+  border-bottom: 2px solid var(--brand-gray-color);
+  background-color: var(--brand-white-color);
 }
 
 .header-left-container {
@@ -67,6 +69,7 @@ const searchIcon = '/icons/search-icon.svg';
 
 .header-right-container {
   display: flex;
+  align-items: center;
   gap: 20px;
 }
 
