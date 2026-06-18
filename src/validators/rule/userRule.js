@@ -39,7 +39,7 @@ export const passwordChk = (password, passwordChk) => {
   return password === passwordChk ? '' : '비밀번호와 비밀번호 확인이 일치하지 않습니다.';
 }
 
-export const userName = (val) => {
+export const name = (val) => {
   const regex = /^[가-힣a-zA-Z]{2,20}$/;
 
   if(!val) {

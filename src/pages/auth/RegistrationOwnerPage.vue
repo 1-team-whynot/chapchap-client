@@ -8,7 +8,7 @@ const registrationData = reactive({
   email: ''
   , password: ''
   , passwordChk: ''
-  , userName: ''
+  , name: ''
   , phone: ''
   , businessName: ''
   , businessNum: ''
@@ -20,7 +20,7 @@ const handleSubmit = () => {
     registrationValidator.email(registrationData.email)
     , registrationValidator.password(registrationData.password)
     , registrationValidator.passwordChk(registrationData.password, registrationData.passwordChk)
-    , registrationValidator.userName(registrationData.userName)
+    , registrationValidator.name(registrationData.name)
     , registrationValidator.phone(registrationData.phone)
     , registrationValidator.businessName(registrationData.businessName)
     , registrationValidator.businessNum(registrationData.businessNum)
@@ -88,14 +88,14 @@ const handleSubmit = () => {
       </div>
 
       <div class="input-container">
-        <label for="userName">성함</label>
+        <label for="name">성함</label>
         <InputBasicComp
-          id="userName"
+          id="name"
           :placeholder="'성함을 입력해주세요.'"
           :readonly="false"
           :required="true"
           :borderColor="'pink'"
-          v-model="registrationData.userName"
+          v-model="registrationData.name"
         ></InputBasicComp>
       </div>
 

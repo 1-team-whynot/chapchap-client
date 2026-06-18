@@ -3,22 +3,29 @@ import { reactive } from 'vue';
 import ButtonComp from '../../components/buttons/ButtonComp.vue';
 import InputBasicComp from '../../components/inputs/InputBasicComp.vue';
 import registrationValidator from '../../validators/auth/registrationValidator.js';
+import { useRouter } from 'vue-router';
+import { useAuthStore } from '../../stores/auth/useAuthStore.js';
+import { useErrorStore } from '../../stores/errors/useErrorStore.js';
+
+const router = useRouter();
+const authStore = useAuthStore();
+const errorStore = useErrorStore();
 
 const registrationData = reactive({
   email: ''
   , password: ''
   , passwordChk: ''
-  , userName: ''
+  , name: ''
   , phone: ''
 });
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
   // 유효성 검사
   const validationList = [
     registrationValidator.email(registrationData.email)
     , registrationValidator.password(registrationData.password)
     , registrationValidator.passwordChk(registrationData.password, registrationData.passwordChk)
-    , registrationValidator.userName(registrationData.userName)
+    , registrationValidator.name(registrationData.name)
     , registrationValidator.phone(registrationData.phone)
   ];
 
@@ -27,6 +34,23 @@ const handleSubmit = () => {
   if(errorList.length > 0) {
     alert(errorList.join('\n'));
     return;
+  }
+
+  try {
+    await authStore.registration(registrationData);
+    alert("환영합니다.");
+    // router.replace('/login');
+  } catch (error) {
+    const data = error.response.data;
+    if(data.code === 'E11') {
+      alert(data.data);
+    } else if(data.code === 'E21') {
+      alert('잘못된 양식입니다.')
+    } else {
+      // alert("오류가 발생했습니다.\n잠시 후 다시 시도해 주십시오.")
+      errorStore.setErrorInfo(error);
+      router.replace('/error');
+    }
   }
 }
 </script>
@@ -84,15 +108,15 @@ const handleSubmit = () => {
       </div>
 
       <div class="input-container">
-        <label for="userName">성함</label>
+        <label for="name">성함</label>
         <InputBasicComp
-          id="userName"
+          id="name"
           :type="'text'"
           :placeholder="'성함을 입력해주세요.'"
           :readonly="false"
           :required="true"
           :borderColor="'orange'"
-          v-model="registrationData.userName"
+          v-model="registrationData.name"
         ></InputBasicComp>
       </div>
 

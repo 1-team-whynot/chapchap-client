@@ -1,10 +1,10 @@
-import { businessName, businessNum, email, password, passwordChk, phone, userName } from "../rule/userRule";
+import { businessName, businessNum, email, name, password, passwordChk, phone } from "../rule/userRule";
 
 export default {
   email
   , password
   , passwordChk
-  , userName
+  , name
   , phone
   , businessName
   , businessNum
