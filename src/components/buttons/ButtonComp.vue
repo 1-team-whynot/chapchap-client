@@ -51,6 +51,11 @@ button {
   color: var(--brand-white-color);
 }
 
+.pink {
+  background-color: var(--brand-point-color);
+  color: var(--brand-white-color);
+}
+
 .white {
   background-color: var(--brand-white-color);
   color: var(--brand-font-color);
