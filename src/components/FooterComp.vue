@@ -1,5 +1,5 @@
 <script setup>
-
+const logo = '/icons/sangdari-logo.png';
 </script>
 
 <template>
@@ -12,8 +12,8 @@
       <a href="" class="footer-font">문의하기</a>
     </div>
     <div class="footer-right-container">
-      <h2 class="banner">챱챱</h2>
       <div>© 2026 Chap Chap. All rights reserved.</div>
+      <img :src="logo" alt="" width="120px" height="70px">
     </div>
   </div>
 </template>
@@ -24,7 +24,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 30px 100px;
-  background-color: var(--brand-white-F5F3F0-color);
+  background-color: var(--brand-gray-color);
 }
 
 .footer-left-container {
@@ -34,16 +34,11 @@
 
 .footer-right-container {
   display: flex;
-  flex-direction: column;
-  text-align: right;
+  align-items: center;  
   gap: 10px;
 }
 
 .footer-font {
   color: var(--brand-font-color);
-}
-
-.banner {
-  color: var(--brand-main-color);
 }
 </style>

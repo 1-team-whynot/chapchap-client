@@ -48,11 +48,11 @@ button {
 
 .orange {
   background-color: var(--brand-main-color);
-  color: var(--brand-white-FFFFFF-color);
+  color: var(--brand-white-color);
 }
 
 .white {
-  background-color: var(--brand-white-FFFFFF-color);
+  background-color: var(--brand-white-color);
   color: var(--brand-font-color);
   border: 1px solid var(--brand-main-color);
 }

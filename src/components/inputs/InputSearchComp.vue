@@ -54,7 +54,7 @@ const model = defineModel();
 .base-input-container {
   width: 100%;
   height: 40px;
-  background-color: var(--brand-white-F5F3F0-color);
+  background-color: var(--brand-gray-color);
   display: flex;
   align-items: center;
   gap: 10px;
