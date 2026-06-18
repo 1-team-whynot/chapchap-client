@@ -14,7 +14,7 @@ const router = useRouter()
 
 // 대충 예약하기 버튼 누르면 해당 상세페이지로 가는거
 const goToBooking = () => {
-  router.push(`/trucks/${props.id}/asd`) // TODO: 예약 경로 확정 후 교체
+  router.push(`/trucks/${props.id}/asd`) // 예약 경로 확정 후 교체
 }
 </script>
 

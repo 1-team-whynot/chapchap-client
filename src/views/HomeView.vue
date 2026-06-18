@@ -37,7 +37,7 @@ onMounted(async () => {
     const res = await axios.get('/api/trucks/recommended')
 
     // 응답받은 데이터를 화면에 사용할 trucks 상태에 저장
-    trucks.value = res.data
+    trucks.value = res.data.slice(0, 2)
 
   } catch (error) {
     // API 요청 실패 시 오류 확인
