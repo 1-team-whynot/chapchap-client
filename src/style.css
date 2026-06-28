@@ -1,6 +1,141 @@
 /* ============================
    Page Layout
    ============================ */
+
+   /* ============================
+   Design Tokens
+   ============================ */
+:root {
+  /* Colors */
+  --color-primary: #ff6b00;
+  --color-primary-hover: #ea580c;
+
+  --color-bg: #f8fafc;
+  --color-white: #ffffff;
+
+  --color-text: #1e293b;
+  --color-text-sub: #475569;
+  --color-text-muted: #64748b;
+
+  --color-border: #e2e8f0;
+
+  --color-danger: #dc2626;
+  --color-danger-light: #fee2e2;
+  --color-danger-border: #fecaca;
+
+  --color-success: #16a34a;
+  --color-success-light: #dcfce7;
+  --color-success-border: #bbf7d0;
+
+  --color-info: #2563eb;
+  --color-info-light: #dbeafe;
+  --color-info-border: #bfdbfe;
+
+  --color-warning: #d97706;
+  --color-warning-light: #fef3c7;
+  --color-warning-text: #92400e;
+
+  --color-purple: #7c3aed;
+  --color-purple-light: #ede9fe;
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 22px;
+  --radius-full: 999px;
+
+  /* Shadow */
+  --shadow-sm: 0 4px 14px rgba(15, 23, 42, 0.06);
+  --shadow-lg: 0 18px 50px rgba(15, 23, 42, 0.12);
+  --shadow-primary: 0 12px 28px rgba(255, 107, 0, 0.25);
+
+  /* Font Size */
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-md: 16px;
+  --text-lg: 18px;
+  --text-xl: 20px;
+  --text-4xl: 32px;
+  --text-5xl: 40px;
+
+  /* Spacing */
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 48px;
+
+  /* Width */
+  --w-xs: 360px;
+  --w-sm: 480px;
+  --w-form: 520px;
+  --w-card: 760px;
+  --w-md: 860px;
+  --w-lg: 1120px;
+  --w-full: 1280px;
+
+  /* Transition */
+  --transition-fast: 0.18s ease;
+  --transition-base: 0.25s ease;
+}
+
+/* ============================
+   Base Reset
+   ============================ */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+}
+
+body {
+  min-height: 100%;
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
 .page {
   min-height: 100vh;
   background: var(--color-bg);

@@ -39,7 +39,6 @@ const model = defineModel();
       :placeholder="placeholder"
       :readonly="readonly"
       :required="require"
-      v-model="model"
     />
   </div>
 </template>

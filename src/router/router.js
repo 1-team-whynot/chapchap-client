@@ -9,6 +9,7 @@ import PaymentFailPage from '../domains/payment/pages/PaymentFailPage.vue'
 import PaymentCompletePage from '../domains/payment/pages/PaymentCompletePage.vue'
 
 import { useAuthStore } from '../stores/auth/useAuthStore.js'
+import HomePage from '../domains/home/HomePage.vue'
 
 const setMeta = (isAuthenticated, isGuestOnly) => {
   return {
@@ -20,7 +21,8 @@ const setMeta = (isAuthenticated, isGuestOnly) => {
 const routes = [
   {
     path: '/',
-    redirect: '/payment',
+    name: 'Home',
+    component: HomePage,
     meta: setMeta(false, false),
   },
 
