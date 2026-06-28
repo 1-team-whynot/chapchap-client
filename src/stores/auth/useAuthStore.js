@@ -24,7 +24,7 @@ export const useAuthStore = defineStore('authStore', () => {
       const res = await myAxios.post(url, loginForm);
       const data = res.data.data;
       accessToken.value = data.accessToken;
-      userInfo.value = data.user;
+      userInfo.value = data.userResponse;
       isLoggedIn.value = true;
     } catch (error) {
       throw error;
@@ -38,7 +38,7 @@ export const useAuthStore = defineStore('authStore', () => {
       const res = await myAxios.post(url);
       const data = res.data.data;
       accessToken.value = data.accessToken;
-      userInfo.value = data.user;
+      userInfo.value = data.userResponse;
       isLoggedIn.value = true;
     } catch (error) {
       clearAuthStore();
