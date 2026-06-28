@@ -18,8 +18,6 @@ myAxios.interceptors.request.use(async (config) => {
   let accessToken = authStore.accessToken;
   const denyUrl = /^\/api\/reissue-token$/;
 
-  console.log("BASE_URL:", import.meta.env.VITE_API_BASE_URL)
-
   if(!denyUrl.test(config.url) && authStore.isLoggedIn) {
     const claims = jwtDecode(accessToken);
     const now = dayjs().unix();
