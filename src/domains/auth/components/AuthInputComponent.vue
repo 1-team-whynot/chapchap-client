@@ -33,6 +33,7 @@ const model = defineModel();
 
     <!-- 인풋 -->
     <input
+      v-model="model"
       class="auth-input"
       :type="type"
       :placeholder="placeholder"
