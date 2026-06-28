@@ -47,7 +47,7 @@ export const useAuthStore = defineStore('authStore', () => {
 
   const signup = async (signupForm) => {
     try {
-      const url = '/api/user/signup';
+      const url = '/api/users/signup';
       
       const res = await myAxios.post(url, signupForm);
       const data = res.data;

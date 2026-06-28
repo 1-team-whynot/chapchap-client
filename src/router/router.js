@@ -27,7 +27,7 @@ const routes = [
 
   // 회원가입 관련
   {
-    path: '/user/signup'
+    path: '/users/signup'
     , component: SignupPage
     , meta: setMeta(false, true)
   }

@@ -118,7 +118,7 @@ const handleSubmit = async () => {
           <div class="auth-links">
             <router-link to="/auth/find-password" class="link-text">비밀번호 찾기</router-link>
             <span class="divider">|</span>
-            <router-link to="/user/signup" class="link-text">회원가입</router-link>
+            <router-link to="/users/signup" class="link-text">회원가입</router-link>
           </div>
         </form>
       </div>
@@ -160,7 +160,7 @@ const handleSubmit = async () => {
           <div class="auth-links">
             <router-link to="/auth/find-password" class="link-text">비밀번호 찾기</router-link>
             <span class="divider">|</span>
-            <router-link to="/user/signup" class="link-text">회원가입</router-link>
+            <router-link to="/owners/signup" class="link-text">회원가입</router-link>
           </div>
         </form>
       </div>
