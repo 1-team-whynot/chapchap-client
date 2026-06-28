@@ -22,7 +22,10 @@ const completedCount = computed(() => {
 // 1. 행사 지역
 const REGIONS = [
   {regionId: 1, name: '서울'},
-  {regionId: 2, name: '경기'}
+  {regionId: 2, name: '경기'},
+  {regionId: 3, name: '인천'},
+  {regionId: 4, name: '강원'},
+  {regionId: 5, name: '대전'}
 ];
 
 // 2. 행사 날짜
@@ -40,7 +43,7 @@ const isDateTooSoon = computed(() => {
 });
 
 // 4. 음식 종류
-const MENUCATEGORIES = ['한식', '분식', '양식', '중식', '일식', '카페·디저트', '기타'];
+const MENUCATEGORIES = ['분식', '도시락/덮밥', '바비큐/스테이크', '카페/디저트', '타코/멕시칸', '닭강정/꼬치', '기타'];
 
 // 4-1. 음식 종류: 버튼 클릭 이벤트
 const toggleCategory = (category) => {
@@ -64,7 +67,7 @@ const canSubmit = computed(() => {
   // 업체 목록 페이지로 이동
 const submitChecklist = () => {
  if (!canSubmit.value) return;
- router.push('/');
+ router.push('/storelist');
 };
 
 </script>
@@ -104,11 +107,11 @@ const submitChecklist = () => {
             placeholder="시/도 선택"
           />
       
-          <input 
+          <!-- <input 
             class="checklist-option-flex3 checklist-style" 
             v-model="checklistStore.regionDetail" 
             placeholder="상세 주소(선택)"
-          ></input>
+          ></input> -->
         </div>
       </div>    
 
@@ -197,7 +200,7 @@ const submitChecklist = () => {
 
 <style scoped>
 .main {
-  width: 760px;
+  width: 730px;
   margin: 0 auto;
   margin-bottom: 50px;
   padding: 0 50px;
@@ -234,16 +237,33 @@ const submitChecklist = () => {
   border: 1px solid gray;
   border-radius: 30px;
   padding: 30px;
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
 }
 
 .checklist-box {
+   display: flex;
+  flex-direction: column;
+  gap: 10px;
+
   position: relative;
 }
 
 .checklist-title {
   padding: 5px;
+
+  font-size: var(--text-md);
+  font-weight: 700;
+  color: var(--color-text);
 }
 
+.checklist-sub {
+  font-size: var(--text-sm);
+  font-weight: 400;
+  color: var(--color-text-placeholder);
+}
 /* ------------------- 1, 2번 항목 스타일 -------------------- */
 .checklist-option {
   margin-top: 5px;

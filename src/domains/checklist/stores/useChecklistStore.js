@@ -31,7 +31,7 @@ export const useChecklistStore = defineStore('checklist', () => {
     let maxHeadcount = null;
     
     if(headcount.value) {
-      const selectedItem = HEADCOUNT.find(item => item.value === headcount.value);
+      const selectedItem = HEADCOUNT.value.find(item => item.value === headcount.value);
       if (selectedItem) {
         minHeadcount = selectedItem.min;
         maxHeadcount = selectedItem.max;

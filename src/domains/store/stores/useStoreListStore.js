@@ -10,7 +10,6 @@ export const useStoreListStore = defineStore("storeListStore", () => {
   const totalItems = ref(0);
   const currentPage = ref(1);
 
-  // TODO: 리미트 값 변경?
   const limit = 10;
 
   // 페이지네이션에서 한 번에 보여줄 버튼 개수
@@ -59,8 +58,8 @@ export const useStoreListStore = defineStore("storeListStore", () => {
       try {
         const url = '/api/stores';
         const params = {
-          ...filterParams.value,
-          page: currentPage,
+          ...filterParams,
+          page: currentPage.value,
           limit
         };
 
@@ -72,14 +71,19 @@ export const useStoreListStore = defineStore("storeListStore", () => {
             indexes: null 
           }
         });
-        const data = res.data;
+        const data = res.data?.data;
+        const stores = data?.stores;
+        console.log(stores);
 
-        // TODO: rea객체 반환 형식 확인하고 수정
-        // 특히 filterStores!
-        filterStores.value.push(...data);
-        isLastPage.value = data.lastPage;
+        // 데이터가 배열인지 확인 후 push
+        if (Array.isArray(stores)) {
+          filterStores.value.push(...stores);
+        } else {
+          console.warn("데이터 형식이 올바르지 않거나 stores가 비어있습니다:", data);
+        }
+
+        isLastPage.value = data.isLastPage;
         totalItems.value = data.totalItems;
-  
       } catch (error) {
         console.error(error);
         throw error;
