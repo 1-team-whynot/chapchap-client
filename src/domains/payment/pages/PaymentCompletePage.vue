@@ -8,7 +8,7 @@ const router = useRouter()
 
 const orderId = computed(() => String(route.query.orderId || ''))
 const amount = computed(() => Number(route.query.amount || 0))
-const reservationId = computed(() => route.query.reservationId || '')
+const reservationId = computed(() => String(route.query.reservationId || ''))
 const paymentType = computed(() => String(route.query.type || 'deposit'))
 
 const paymentTypeName = computed(() => {
@@ -16,7 +16,13 @@ const paymentTypeName = computed(() => {
 })
 
 const statusText = computed(() => {
-  return paymentType.value === 'balance' ? '결제완료' : '예약확정'
+  return paymentType.value === 'balance' ? '결제 완료' : '예약 확정'
+})
+
+const statusBadgeClass = computed(() => {
+  return paymentType.value === 'balance'
+    ? 'status-badge--PAYMENT_COMPLETED'
+    : 'status-badge--CONFIRMED'
 })
 
 const goReservation = () => {
@@ -44,14 +50,7 @@ const goNewRequest = () => {
 
         <div class="card payment-info-card mb-6">
           <div class="confirmed-card-status mb-4">
-            <span
-              :class="[
-                'status-badge',
-                paymentType === 'deposit'
-                  ? 'status-badge--CONFIRMED'
-                  : 'status-badge--PAYMENT_COMPLETED'
-              ]"
-            >
+            <span :class="['status-badge', statusBadgeClass]">
               {{ statusText }}
             </span>
 
@@ -79,7 +78,8 @@ const goNewRequest = () => {
         </div>
 
         <div class="alert alert--info mb-6 text-left">
-          💡 <b>안내:</b> 결제 승인 처리가 완료되었습니다. 예약 상태는 백엔드 결제 처리 결과를 기준으로 반영됩니다.
+          💡 <b>안내:</b> 결제 승인 처리가 완료되었습니다.
+          예약 상태는 백엔드 결제 처리 결과를 기준으로 반영됩니다.
         </div>
 
         <div class="confirmed-actions">
@@ -112,7 +112,7 @@ const goNewRequest = () => {
 .success-screen-title {
   font-size: 28px;
   font-weight: 800;
-  color: var(--color-text-main);
+  color: var(--color-text);
   margin-bottom: var(--space-2);
 }
 
@@ -156,7 +156,7 @@ const goNewRequest = () => {
 
 .info-value {
   font-weight: 700;
-  color: var(--color-text-main);
+  color: var(--color-text);
   text-align: right;
   word-break: break-all;
 }
@@ -166,8 +166,8 @@ const goNewRequest = () => {
   font-size: var(--text-md);
 }
 
-.text-xs {
-  font-size: 11px;
+.text-left {
+  text-align: left;
 }
 
 .confirmed-actions {

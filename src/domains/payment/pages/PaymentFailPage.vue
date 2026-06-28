@@ -6,14 +6,15 @@ import BaseButton from '../../common/components/BaseButton.vue'
 const route = useRoute()
 const router = useRouter()
 
-const errorCode = computed(() => route.query.code || 'UNKNOWN_ERROR')
-const errorMessage = computed(() => {
-  return route.query.message || '결제 진행 중 알 수 없는 오류가 발생했습니다.'
-})
-const orderId = computed(() => route.query.orderId || 'N/A')
+const errorCode = computed(() => String(route.query.code || 'UNKNOWN_ERROR'))
 
-const reservationId = computed(() => route.query.reservationId || '')
-const paymentType = computed(() => route.query.type || 'deposit')
+const errorMessage = computed(() => {
+  return String(route.query.message || '결제 진행 중 알 수 없는 오류가 발생했습니다.')
+})
+
+const orderId = computed(() => String(route.query.orderId || 'N/A'))
+const reservationId = computed(() => String(route.query.reservationId || ''))
+const paymentType = computed(() => String(route.query.type || 'deposit'))
 
 function retryPayment() {
   if (reservationId.value) {
@@ -70,7 +71,7 @@ function goBack() {
           </div>
         </div>
 
-        <div class="confirmed-actions">
+        <div class="fail-actions">
           <BaseButton variant="ghost" full-width @click="goBack">
             이전으로
           </BaseButton>
@@ -100,7 +101,7 @@ function goBack() {
 .fail-screen-title {
   font-size: 28px;
   font-weight: 800;
-  color: var(--color-text-main);
+  color: var(--color-text);
   margin-bottom: var(--space-2);
 }
 
@@ -114,8 +115,8 @@ function goBack() {
 .error-info-card {
   text-align: left;
   padding: 24px;
-  border-color: rgba(239, 68, 68, 0.2);
-  background-color: rgba(254, 242, 242, 0.5);
+  border-color: var(--color-danger-border);
+  background-color: var(--color-danger-light);
 }
 
 .info-row {
@@ -138,7 +139,7 @@ function goBack() {
 
 .info-value {
   font-weight: 700;
-  color: var(--color-text-main);
+  color: var(--color-text);
   text-align: right;
   word-break: break-all;
   max-width: 70%;
@@ -148,13 +149,13 @@ function goBack() {
   color: var(--color-danger);
 }
 
-.confirmed-actions {
+.fail-actions {
   display: flex;
   gap: var(--space-3);
 }
 
 @media (max-width: 640px) {
-  .confirmed-actions {
+  .fail-actions {
     flex-direction: column;
   }
 }

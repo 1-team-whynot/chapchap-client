@@ -1,93 +1,97 @@
-import { createRouter, createWebHistory } from 'vue-router';
-import LoginPage from '../domains/auth/pages/LoginPage.vue';
-import { useAuthStore } from '../stores/auth/useAuthStore.js';
-import SignupPage from '../domains/auth/pages/SignupPage.vue';
+import { createRouter, createWebHistory } from 'vue-router'
+
+import LoginPage from '../domains/auth/pages/LoginPage.vue'
+import SignupPage from '../domains/auth/pages/SignupPage.vue'
+
 import PaymentPage from '../domains/payment/pages/PaymentPage.vue'
 import PaymentSuccessPage from '../domains/payment/pages/PaymentSuccessPage.vue'
 import PaymentFailPage from '../domains/payment/pages/PaymentFailPage.vue'
 import PaymentCompletePage from '../domains/payment/pages/PaymentCompletePage.vue'
 
+import { useAuthStore } from '../stores/auth/useAuthStore.js'
 
-const setMeta = (isAuthrenticated, isGuestOnly) => {
+const setMeta = (isAuthenticated, isGuestOnly) => {
   return {
-    isAuthrenticated
-    , isGuestOnly
+    isAuthenticated,
+    isGuestOnly,
   }
 }
 
 const routes = [
   {
-    path: '/'
-    // , component: 
-    // , redirect: '/user/main'
-    , meta: setMeta(false, false)
-  },
-
-  // 로그인 관련
-  {
-    path: '/auth/login'
-    , component: LoginPage
-    , meta: setMeta(false, true)
-  },
-
-  // 회원가입 관련
-  {
-    path: '/users/signup'
-    , component: SignupPage
-    , meta: setMeta(false, true)
-  },
-  {
     path: '/',
     redirect: '/payment',
+    meta: setMeta(false, false),
   },
+
+  // 로그인
+  {
+    path: '/auth/login',
+    name: 'Login',
+    component: LoginPage,
+    meta: setMeta(false, true),
+  },
+
+  // 회원가입
+  {
+    path: '/users/signup',
+    name: 'Signup',
+    component: SignupPage,
+    meta: setMeta(false, true),
+  },
+
+  // 결제
   {
     path: '/payment',
     name: 'Payment',
     component: PaymentPage,
+    meta: setMeta(false, false),
   },
   {
     path: '/payment/success',
     name: 'PaymentSuccess',
     component: PaymentSuccessPage,
+    meta: setMeta(false, false),
   },
   {
     path: '/payment/fail',
     name: 'PaymentFail',
     component: PaymentFailPage,
+    meta: setMeta(false, false),
   },
   {
     path: '/payment/complete',
     name: 'PaymentComplete',
     component: PaymentCompletePage,
+    meta: setMeta(false, false),
   },
-];
+]
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
-});
+  routes,
+})
 
 router.beforeEach(async (to, from, next) => {
-  // authStore
-  const authStore = useAuthStore();
+  const authStore = useAuthStore()
 
-  if(!authStore.isLoggedIn) {
+  if (!authStore.isLoggedIn) {
     try {
-      await authStore.reissue();
-    } catch(error) {
-      
+      await authStore.reissue()
+    } catch (error) {
+      // 로그인 안 된 상태면 조용히 통과
     }
   }
 
-  if(to.meta.isAuthrenticated && !authStore.isLoggedIn) {
-    return next('/auth/login');
+  if (to.meta.isAuthenticated && !authStore.isLoggedIn) {
+    return next('/auth/login')
   }
 
-  if(to.meta.isGuestOnly && authStore.isLoggedIn) {
-    return next('/');
+  if (to.meta.isGuestOnly && authStore.isLoggedIn) {
+    return next('/')
   }
 
-  next();
-});
+  next()
+})
 
-export default router;
+export default router

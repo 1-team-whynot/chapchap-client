@@ -27,18 +27,17 @@ const paymentReady = ref(null)
 
 const isLoading = ref(false)
 const errorMessage = ref('')
-const isWidgetReady = ref(false)
+const isPaymentReady = ref(false)
 
-// 토스페이먼츠 위젯 인스턴스
-let widgetsInstance = null
+// Toss Payments 결제창 인스턴스
+let paymentInstance = null
 
-// 테스트용 클라이언트 키
-const clientKey =
-  import.meta.env.VITE_TOSS_CLIENT_KEY ||
-  'test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm'
+// API 개별 연동 클라이언트 키
+// 프론트 .env에 VITE_TOSS_CLIENT_KEY=test_ck_... 형태로 넣어야 함
+const clientKey = import.meta.env.VITE_TOSS_CLIENT_KEY
 
 // 로그인 머지 전 임시 customerKey
-// 로그인 붙으면 userId 기반으로 변경하면 됨
+// customerKey는 2~300자이며 특수문자를 포함하는 값이 권장됨
 const customerKey = 'cust_sangdari_temp_user'
 
 const amount = computed(() => {
@@ -54,6 +53,11 @@ const paymentTypeName = computed(() => {
 onMounted(async () => {
   if (!reservationId.value || Number.isNaN(reservationId.value)) {
     errorMessage.value = '잘못된 예약 번호입니다.'
+    return
+  }
+
+  if (!clientKey) {
+    errorMessage.value = '토스페이먼츠 클라이언트 키가 설정되지 않았습니다.'
     return
   }
 
@@ -78,38 +82,22 @@ onMounted(async () => {
       return
     }
 
-    // 2. 토스페이먼츠 위젯 초기화
+    // 2. Toss Payments SDK 초기화
     const tossPayments = window.TossPayments(clientKey)
 
-    widgetsInstance = tossPayments.widgets({
+    // 3. API 개별 연동 결제창 인스턴스 생성
+    paymentInstance = tossPayments.payment({
       customerKey,
     })
 
-    // 3. 백엔드에서 받은 금액으로 결제 금액 설정
-    await widgetsInstance.setAmount({
-      currency: 'KRW',
-      value: paymentReady.value.amount,
-    })
-
-    // 4. 결제수단 / 약관 위젯 렌더링
-    await Promise.all([
-      widgetsInstance.renderPaymentMethods({
-        selector: '#payment-method',
-        variantKey: 'DEFAULT',
-      }),
-      widgetsInstance.renderAgreement({
-        selector: '#agreement',
-        variantKey: 'DEFAULT',
-      }),
-    ])
-
-    isWidgetReady.value = true
+    isPaymentReady.value = true
   } catch (error) {
     console.error('결제 준비 중 오류:', error)
 
     errorMessage.value =
       error.response?.data?.data ||
       error.response?.data?.message ||
+      error.message ||
       '결제 준비 중 오류가 발생했습니다.'
   } finally {
     isLoading.value = false
@@ -117,7 +105,7 @@ onMounted(async () => {
 })
 
 const handlePayment = async () => {
-  if (!widgetsInstance || !paymentReady.value || !amount.value) {
+  if (!paymentInstance || !paymentReady.value || !amount.value) {
     return
   }
 
@@ -132,7 +120,17 @@ const handlePayment = async () => {
       `?reservationId=${reservationId.value}` +
       `&type=${paymentTypeQuery.value}`
 
-    await widgetsInstance.requestPayment({
+    await paymentInstance.requestPayment({
+      // API 개별 연동 결제창 방식
+      // CARD = 카드/간편결제 통합결제창
+      method: 'CARD',
+
+      // V2 SDK에서는 amount가 객체 형태여야 함
+      amount: {
+        currency: 'KRW',
+        value: paymentReady.value.amount,
+      },
+
       // 백엔드에서 만든 orderId 사용
       orderId: paymentReady.value.orderId,
 
@@ -170,7 +168,7 @@ const handlePayment = async () => {
         <div class="page-header text-center mb-6">
           <h1 class="page-header-title">안전 결제</h1>
           <p class="page-header-desc">
-            토스페이먼츠의 안전 결제 시스템을 이용합니다.
+            토스페이먼츠의 카드/간편결제 통합결제창을 이용합니다.
           </p>
         </div>
 
@@ -250,16 +248,38 @@ const handlePayment = async () => {
             </BaseButton>
           </div>
 
-          <!-- 오른쪽: 토스페이먼츠 위젯 및 결제 버튼 -->
-          <div class="card payment-widget-card">
-            <div id="payment-method"></div>
-            <div id="agreement"></div>
+          <!-- 오른쪽: API 개별 연동 결제창 안내 및 결제 버튼 -->
+          <div class="card payment-window-card">
+            <h3 class="card-title">결제수단</h3>
+
+            <div class="payment-method-box">
+              <div class="payment-method-icon">💳</div>
+
+              <div class="payment-method-content">
+                <div class="payment-method-title">
+                  카드 / 간편결제
+                </div>
+                <div class="payment-method-desc">
+                  결제 버튼을 누르면 토스페이먼츠 통합결제창이 열립니다.
+                </div>
+              </div>
+
+              <span class="status-badge status-badge--CONFIRMED">
+                선택됨
+              </span>
+            </div>
+
+            <div class="payment-guide-box mt-5">
+              <p>
+                결제창에서 카드 또는 간편결제를 선택한 뒤 결제를 진행해 주세요.
+              </p>
+            </div>
 
             <div class="action-btn-container mt-6">
               <BaseButton
                 variant="primary"
                 full-width
-                :disabled="!isWidgetReady || !amount"
+                :disabled="!isPaymentReady || !amount"
                 @click="handlePayment"
               >
                 {{ amount.toLocaleString() }}원 안전 결제하기
@@ -287,14 +307,15 @@ const handlePayment = async () => {
   }
 }
 
-.payment-summary-card {
+.payment-summary-card,
+.payment-window-card {
   padding: 30px;
 }
 
 .card-title {
   font-size: var(--text-lg);
   font-weight: 700;
-  color: var(--color-text-main);
+  color: var(--color-text);
   margin-bottom: 20px;
 }
 
@@ -326,7 +347,7 @@ const handlePayment = async () => {
 .store-info-value {
   font-size: var(--text-md);
   font-weight: 700;
-  color: var(--color-text-main);
+  color: var(--color-text);
   text-align: right;
 }
 
@@ -355,7 +376,7 @@ const handlePayment = async () => {
 
 .event-info-value {
   font-weight: 600;
-  color: var(--color-text-main);
+  color: var(--color-text);
   text-align: right;
 }
 
@@ -376,7 +397,7 @@ const handlePayment = async () => {
 
 .total-price-label {
   font-weight: 700;
-  color: var(--color-text-main);
+  color: var(--color-text);
 }
 
 .total-price-value {
@@ -386,8 +407,45 @@ const handlePayment = async () => {
   text-align: right;
 }
 
-.payment-widget-card {
-  padding: 20px;
+.payment-method-box {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border: 1.5px solid var(--color-primary-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-primary-light);
+}
+
+.payment-method-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.payment-method-content {
+  flex: 1;
+}
+
+.payment-method-title {
+  font-size: var(--text-md);
+  font-weight: 800;
+  color: var(--color-text);
+  margin-bottom: 4px;
+}
+
+.payment-method-desc {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.payment-guide-box {
+  padding: 14px 16px;
+  background: var(--color-bg-alt);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  line-height: 1.6;
 }
 
 .action-btn-container {
