@@ -169,14 +169,14 @@ const submitChecklist = () => {
       <p class="checklist-title">전기 사용 여부</p>
       <div class="checklist-btn-option">
         <button
-            :class="['checklist-btn', 'checklist-option-flex1', {'checklist-btn-active': checklistStore.isPowerAvailable === false }]"
-            @click="checklistStore.isPowerAvailable = false"
+            :class="['checklist-btn', 'checklist-option-flex1', {'checklist-btn-active': checklistStore.isPowerAvailable === true }]"
+            @click="checklistStore.isPowerAvailable = true"
         >
           가능
         </button>
         <button
-            :class="['checklist-btn', 'checklist-option-flex1', {'checklist-btn-active': checklistStore.isPowerAvailable === true }]"
-            @click="checklistStore.isPowerAvailable = true"
+            :class="['checklist-btn', 'checklist-option-flex1', {'checklist-btn-active': checklistStore.isPowerAvailable === false }]"
+            @click="checklistStore.isPowerAvailable = false"
         >
           불가
         </button>
