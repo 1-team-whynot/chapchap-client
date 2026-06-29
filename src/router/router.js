@@ -12,6 +12,9 @@ import { useAuthStore } from '../stores/auth/useAuthStore.js'
 import HomePage from '../domains/home/HomePage.vue'
 import ChecklistPage from '../domains/checklist/pages/checklistPage.vue'
 import StoreListPage from '../domains/store/pages/StoreListPage.vue'
+import StoreDetailPage from '../domains/store/pages/StoreDetailPage.vue'
+import ReservationCreatePage from '../domains/reservation/pages/ReservationCreatePage.vue'
+import MyRequestsPage from '../domains/reservation/pages/MyRequestsPage.vue'
 
 const setMeta = (isAuthenticated, isGuestOnly) => {
   return {
@@ -42,6 +45,24 @@ const routes = [
     name: 'StoreList',
     component: StoreListPage,
     meta: setMeta(false, false),
+  },
+  {
+    path: '/stores/:storeId',
+    name: 'StoreDetail',
+    component: StoreDetailPage,
+    meta: setMeta(false, false),
+  },
+  {
+    path: '/reservation/create',
+    name: 'ReservationCreate',
+    component: ReservationCreatePage,
+    meta: setMeta(true, false),
+  },
+  {
+    path: '/my-requests',
+    name: 'MyRequests',
+    component: MyRequestsPage,
+    meta: setMeta(true, false),
   },
 
   // 로그인
@@ -92,7 +113,7 @@ const router = createRouter({
   routes,
 })
 
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to) => {
   const authStore = useAuthStore()
 
   if (to.meta.isAuthenticated && !authStore.isLoggedIn) {
@@ -111,8 +132,6 @@ router.beforeEach(async (to, from, next) => {
   if (to.meta.isGuestOnly && authStore.isLoggedIn) {
     return '/'
   }
-
-  next()
 })
 
 export default router

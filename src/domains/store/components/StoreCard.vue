@@ -43,9 +43,9 @@ const batteryText = computed(() => (
         {{ store.storeDesc || '업체 소개가 없습니다.' }}
       </p>
 
-      <button class="store-card-disabled-btn" type="button" disabled>
-        상세 보기 준비 중
-      </button>
+      <RouterLink :to="`/stores/${store.storeId}`" class="store-card-link">
+        상세 보기
+      </RouterLink>
     </div>
   </article>
 </template>
@@ -125,15 +125,26 @@ const batteryText = computed(() => (
   flex: 1;
 }
 
-.store-card-disabled-btn {
+.store-card-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   margin-top: var(--space-2);
   padding: 11px 16px;
-  border: 1.5px solid var(--color-border);
+  border: 1.5px solid var(--color-primary);
   border-radius: var(--radius-lg);
-  background: var(--color-bg);
-  color: var(--color-text-muted);
+  background: var(--color-primary);
+  color: var(--color-white);
   font-weight: 800;
-  cursor: not-allowed;
+  text-decoration: none;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.store-card-link:hover {
+  border-color: var(--color-primary-hover);
+  background: var(--color-primary-hover);
 }
 </style>
