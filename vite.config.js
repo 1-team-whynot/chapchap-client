@@ -6,10 +6,14 @@ export default defineConfig({
   plugins: [vue()],
   server: {
     proxy: {
+      // 프론트에서 /api로 시작하는 요청을 감지하면 아래 target 서버로 대리 전송합니다.
       '/api': {
-        target: 'http://localhost:8080', // 여기에 실제 백엔드 서버 주소를 넣으세요
+        target: 'http://localhost:8080', // 백엔드 서버 주소
         changeOrigin: true,
-        secure: false,
+      },
+      '/files': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
       }
     }
   }

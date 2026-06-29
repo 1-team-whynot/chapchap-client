@@ -1,319 +1,308 @@
 <script setup>
-import { computed, ref } from 'vue';
-import BaseSelect from '../components/BaseSelect.vue';
-import { useChecklistStore } from '../stores/useChecklistStore.js';
-import { useRouter } from 'vue-router';
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 
-const checklistStore = useChecklistStore();
-const router = useRouter();
+import BaseSelect from '../components/BaseSelect.vue'
+import { useChecklistStore } from '../stores/useChecklistStore.js'
 
-// 체크된 항목 표시
+const checklistStore = useChecklistStore()
+const router = useRouter()
+
 const completedCount = computed(() => {
-  let count = 0;
-  if(checklistStore.region)                                 count++;
-  if(checklistStore.date && checklistStore.date >= minDate) count++;
-  if(checklistStore.headcount)                              count++;
-  if(checklistStore.selectedCategories.length > 0)          count++;
-  if(checklistStore.isPowerAvailable != null)      count++;
-  return count;
+  let count = 0
+
+  if (checklistStore.regionId) count += 1
+  if (checklistStore.isDateRangeValid) count += 1
+  if (checklistStore.headcount) count += 1
+  if (checklistStore.selectedCategories.length > 0) count += 1
+  if (checklistStore.isPowerAvailable !== null) count += 1
+
+  return count
 })
 
-// --------------------- 선택 폼 ---------------------------------------
-// 1. 행사 지역
-const REGIONS = [
-  {regionId: 1, name: '서울'},
-  {regionId: 2, name: '경기'},
-  {regionId: 3, name: '인천'},
-  {regionId: 4, name: '강원'},
-  {regionId: 5, name: '대전'}
-];
+const canSubmit = computed(() => checklistStore.isComplete)
 
-// 2. 행사 날짜
-  // minDate => 오늘로부터 14일 이후 일자. String
-const today = new Date();
-const minDateObj = new Date();
-minDateObj.setDate(today.getDate() + 14);
-const minDate = minDateObj.toISOString().split('T')[0];
-
-// 2-1. 행사 날짜 14일 이내일 시 true(경고문) 출력
-const isDateTooSoon = computed(() => {
-  if(!checklistStore.date) return false
-
-  return new Date(checklistStore.date) < new Date(minDate)
-});
-
-// 4. 음식 종류
-const MENUCATEGORIES = ['분식', '한식', '일식', '중식', '양식', '카페/디저트', '패스트푸드', '기타'];
-
-// 4-1. 음식 종류: 버튼 클릭 이벤트
-const toggleCategory = (category) => {
-  const index = checklistStore.selectedCategories.indexOf(category);
-  if (index === -1) {
-    // 아직 선택 안 됨 => 추가
-    checklistStore.selectedCategories.push(category);
-  } else {
-    // 이미 선택됨 => 제거
-    checklistStore.selectedCategories.splice(index, 1);
-  }
-}
-
-// ----------------------------------------------------------------------------------
-// 제출 버튼
-  // 5개 항목 모두 선택하면 제출 버튼 활성화
-const canSubmit = computed(() => {
-  return completedCount.value === 5;
-});
-
-  // 업체 목록 페이지로 이동
 const submitChecklist = () => {
- if (!canSubmit.value) return;
- router.push('/storelist');
-};
+  if (!canSubmit.value) return
 
+  router.push({
+    path: '/storelist',
+    query: checklistStore.filterParams,
+  })
+}
 </script>
 
 <template>
-<h1 style="text-align: center;">헤더</h1>
-<hr>
+  <main class="page-body">
+    <div class="container container--md checklist-page">
+      <header class="page-header text-center">
+        <h1 class="page-header-title">행사 조건 입력</h1>
+        <p class="page-header-desc">
+          조건을 모두 입력하면 행사에 맞는 업체를 찾아볼 수 있습니다.
+        </p>
+      </header>
 
-  <div class="main">
+      <div class="progress-dots" aria-label="체크리스트 입력 진행도">
+        <span
+          v-for="step in 5"
+          :key="step"
+          :class="[
+            'progress-dot',
+            { 'progress-dot--active': completedCount >= step },
+          ]"
+        />
+      </div>
 
-    <!-- 페이지 제목 -->
-    <div class="page-title">
-      <h1>행사 조건 입력</h1>
-      <span>조건을 모두 입력하면 맞춤 트럭을 추천해드려요.</span>
-    </div>
-
-    <!-- 체크된 항목 표시(도트) -->
-    <div class="checked-dots">
-      <div 
-        v-for="i in 5"
-        :key="i"
-        :class="['dot', {'dot-checked': completedCount >= i}]"
-      ></div>
-    </div>
-
-    <!-- 선택 폼 -->
-    <div class="checklist-card"> 
-    
-      <!-- 1. 행사 지역 -->
-      <div class="checklist-box">
-        <p class="checklist-title">행사 지역</p>
-        <div class="checklist-option">
+      <section class="card checklist-card">
+        <div class="checklist-field">
+          <label class="checklist-label" for="region">행사 장소</label>
           <BaseSelect
-            class="checklist-option-flex1" 
-            v-model="checklistStore.region"
-            :options="REGIONS"
+            id="region"
+            v-model="checklistStore.regionId"
+            :options="checklistStore.REGIONS"
             placeholder="시/도 선택"
           />
-      
-          <!-- <input 
-            class="checklist-option-flex3 checklist-style" 
-            v-model="checklistStore.regionDetail" 
-            placeholder="상세 주소(선택)"
-          ></input> -->
         </div>
-      </div>    
 
-      <!-- 2. 행사 날짜 -->
-      <div class="checklist-box">
-        <p class="checklist-title">행사 날짜</p>
-        <div class="checklist-option">
-          <input 
-            class="checklist-style"
-            type="date"
-            v-model="checklistStore.date"
-            :min="minDate"
-          >
+        <div class="checklist-grid">
+          <div class="checklist-field">
+            <label class="checklist-label" for="event-start-date">
+              행사 시작 일자
+            </label>
+            <input
+              id="event-start-date"
+              v-model="checklistStore.eventStartDate"
+              class="checklist-input"
+              type="date"
+              :min="checklistStore.minEventDate"
+            >
+          </div>
+
+          <div class="checklist-field">
+            <label class="checklist-label" for="event-end-date">
+              행사 종료 일자
+            </label>
+            <input
+              id="event-end-date"
+              v-model="checklistStore.eventEndDate"
+              class="checklist-input"
+              type="date"
+              :min="checklistStore.eventStartDate || checklistStore.minEventDate"
+            >
+          </div>
         </div>
-        <p v-if="isDateTooSoon" class="checklist-warning">
-          : 최소 14일 후 날짜를 선택해주세요.
+
+        <p v-if="checklistStore.dateMessage" class="alert alert--warning">
+          {{ checklistStore.dateMessage }}
         </p>
-      </div>
 
-      <!-- 3. 예상 인원 -->
-    <div class="checklist-box">
-      <p class="checklist-title">예상 인원</p>
-      <div class="checklist-btn-option">
+        <div class="checklist-field">
+          <p class="checklist-label">예상 인원</p>
+          <div class="button-group">
+            <button
+              v-for="option in checklistStore.HEADCOUNT_OPTIONS"
+              :key="option.value"
+              type="button"
+              :class="[
+                'choice-button',
+                { 'choice-button--active': checklistStore.headcount === option.value },
+              ]"
+              @click="checklistStore.headcount = option.value"
+            >
+              {{ option.label }}
+            </button>
+          </div>
+        </div>
+
+        <div class="checklist-field">
+          <p class="checklist-label">
+            메뉴 카테고리
+            <span class="checklist-label-sub">중복 선택 가능</span>
+          </p>
+          <div class="button-group">
+            <button
+              v-for="category in checklistStore.MENU_CATEGORIES"
+              :key="category"
+              type="button"
+              :class="[
+                'choice-button',
+                {
+                  'choice-button--active':
+                    checklistStore.selectedCategories.includes(category),
+                },
+              ]"
+              @click="checklistStore.toggleCategory(category)"
+            >
+              {{ category }}
+            </button>
+          </div>
+        </div>
+
+        <div class="checklist-field">
+          <p class="checklist-label">전기 사용 여부</p>
+          <div class="button-group button-group--two">
+            <button
+              type="button"
+              :class="[
+                'choice-button',
+                { 'choice-button--active': checklistStore.isPowerAvailable === true },
+              ]"
+              @click="checklistStore.isPowerAvailable = true"
+            >
+              사용 가능
+            </button>
+            <button
+              type="button"
+              :class="[
+                'choice-button',
+                { 'choice-button--active': checklistStore.isPowerAvailable === false },
+              ]"
+              @click="checklistStore.isPowerAvailable = false"
+            >
+              사용 불가
+            </button>
+          </div>
+        </div>
+
         <button
-          v-for="option in checklistStore.HEADCOUNT"
-          :key="option.value"
-          :class="['checklist-btn', {'checklist-btn-active': checklistStore.headcount === option.value}]"
-          @click="checklistStore.headcount = option.value"
+          class="submit-button"
+          type="button"
+          :disabled="!canSubmit"
+          @click="submitChecklist"
         >
-          {{ option.label }}
+          조건에 맞는 업체 보기
         </button>
-      </div>
+      </section>
     </div>
-
-    <!-- 4. 음식 종류 -->
-    <div class="checklist-box">
-      <p class="checklist-title">
-        음식 종류
-        <span class="checklist-sub">(중복 선택)</span>
-      </p>
-      <div class="checklist-btn-option">
-        <button
-          v-for="category in MENUCATEGORIES"
-          :key="category"
-          :class="['checklist-btn', {'checklist-btn-active': checklistStore.selectedCategories.includes(category) }]"
-          @click="toggleCategory(category)"
-        >
-        {{ category }}
-        </button>
-      </div>
-    </div>
-
-    <!-- 5. 전기 사용 여부 -->
-    <div class="checklist-box">
-      <p class="checklist-title">전기 사용 여부</p>
-      <div class="checklist-btn-option">
-        <button
-            :class="['checklist-btn', 'checklist-option-flex1', {'checklist-btn-active': checklistStore.isPowerAvailable === true }]"
-            @click="checklistStore.isPowerAvailable = true"
-        >
-          가능
-        </button>
-        <button
-            :class="['checklist-btn', 'checklist-option-flex1', {'checklist-btn-active': checklistStore.isPowerAvailable === false }]"
-            @click="checklistStore.isPowerAvailable = false"
-        >
-          불가
-        </button>
-      </div>
-    </div>
-
-    <!-- 제출 버튼 -->
-    <button
-      :class="'checklist-btn'"
-      :disabled="!canSubmit"
-      @click="submitChecklist"
-    >
-      맞춤 트럭 보기 → 
-    </button>
-    </div>
-  </div>
-
+  </main>
 </template>
 
 <style scoped>
-.main {
-  width: 730px;
-  margin: 0 auto;
-  margin-bottom: 50px;
-  padding: 0 50px;
+.checklist-page {
+  max-width: 760px;
 }
 
-.page-title {
-  padding-top: 30px;
-  text-align: center;
-}
-
-/* ------------------------ 체크한 항목 개수 표시 동그라미 --------------------------- */
-.checked-dots {
-  padding: 16px 24px;
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-}
-
-.dot {
-  width: 10px;
-  height: 10px;
-  background-color: gray;
-  border-color: gray;
-  border-radius: 20px;
-}
-
-.dot-checked {
-  background-color: orange;
-  border-color: orange;
-}
-
-/* ----------------------------- 체크리스트 카드 ---------------------------------- */
 .checklist-card {
-  border: 1px solid gray;
-  border-radius: 30px;
-  padding: 30px;
-
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
 }
 
-.checklist-box {
-   display: flex;
-  flex-direction: column;
-  gap: 10px;
-
-  position: relative;
+.progress-dots {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-8);
 }
 
-.checklist-title {
-  padding: 5px;
+.progress-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-border);
+  transition: background var(--transition-fast);
+}
 
+.progress-dot--active {
+  background: var(--color-primary);
+}
+
+.checklist-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.checklist-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.checklist-label {
+  color: var(--color-text);
   font-size: var(--text-md);
-  font-weight: 700;
+  font-weight: 800;
+}
+
+.checklist-label-sub {
+  margin-left: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.checklist-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-white);
   color: var(--color-text);
 }
 
-.checklist-sub {
-  font-size: var(--text-sm);
-  font-weight: 400;
-  color: var(--color-text-placeholder);
-}
-/* ------------------- 1, 2번 항목 스타일 -------------------- */
-.checklist-option {
-  margin-top: 5px;
-  display: flex;
-  gap: 10px;
-  justify-content: space-between;
-}
-
-.checklist-option-flex1 {
-  flex: 1;
-}
-.checklist-option-flex3 {
-  flex: 3;
-}
-
-/* ------------------ 3, 4, 5번 항목 스타일 ---------------------- */
-.checklist-btn-option {
-  padding: 5px;
+.button-group {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: var(--space-3);
 }
 
-.checklist-btn {
-  padding: 10px 30px;
-  color: black;
-  background-color: white;
-  border: 1px solid gray;
-  border-radius: 10px;
-  cursor: pointer;
-}
-.checklist-btn-active {
-  border-color: orange;
-  background: #ffe2acb4;
-  color: black;
+.button-group--two .choice-button {
+  flex: 1;
 }
 
-.checklist-style {
+.choice-button,
+.submit-button {
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-white);
+  color: var(--color-text-sub);
+  font-weight: 800;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.choice-button {
+  padding: 10px 18px;
+  font-size: var(--text-base);
+}
+
+.choice-button--active {
+  border-color: var(--color-primary);
+  background: #fff7ed;
+  color: var(--color-primary);
+}
+
+.submit-button {
   width: 100%;
-  padding: 10px;
-  color: black;
-  border: 1px solid gray;
-  border-radius: 10px;
+  padding: 14px 20px;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-white);
+  font-size: var(--text-md);
 }
 
-.checklist-warning {
-  position: absolute;
-  top: 30px;
-  left: 100px;
+.submit-button:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
 
-  padding: 5px;
-  color: red;
-  background-color: white;
+.submit-button:disabled {
+  background: var(--color-border);
+  border-color: var(--color-border);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .checklist-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .button-group--two .choice-button {
+    flex-basis: 100%;
+  }
 }
 </style>
