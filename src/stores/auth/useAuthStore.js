@@ -45,6 +45,18 @@ export const useAuthStore = defineStore('authStore', () => {
     }
   }
 
+  const logout = async () => {
+    try {
+      const url = '/api/auth/logout';
+
+      await myAxios.post(url);
+    } catch (error) {
+      console.error('서버 로그아웃 처리 중 에러 발생:', error);
+    } finally {
+      clearAuthStore();
+    }
+  }
+
   const signup = async (signupForm) => {
     try {
       const url = '/api/users/signup';
@@ -77,6 +89,7 @@ export const useAuthStore = defineStore('authStore', () => {
     , isLoggedIn
     , login 
     , reissue
+    , logout
     , signup
     , checkEmail
   }

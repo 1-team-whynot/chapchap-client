@@ -79,9 +79,10 @@ router.beforeEach(async (to, from, next) => {
 
   if (!authStore.isLoggedIn) {
     try {
-      await authStore.reissue()
-    } catch (error) {
-      // 로그인 안 된 상태면 조용히 통과
+      await authStore.reissue();
+    } catch(error) {
+      alert('로그인 시간이 만료되었습니다.\n다시 로그인 해주십시오.');
+      return next('/auth/login');
     }
   }
 
