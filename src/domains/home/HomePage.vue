@@ -1,61 +1,69 @@
 <script setup>
-import { computed } from 'vue'
+import { onMounted, ref } from 'vue'
 
-import { useAuthStore } from '../../stores/auth/useAuthStore.js'
+import myAxios from '../api/myAxios.js'
 
-const authStore = useAuthStore()
+const checklistLink = '/checklist'
+const storeListLink = '/storelist'
 
-// 현재 라우터에 존재하는 경로만 사용
-// 업체 목록 페이지가 생기면 '/payment' 대신 '/vendors' 같은 경로로 교체하면 됩니다.
-const vendorLink = computed(() => {
-  return authStore.isLoggedIn ? '/payment' : '/auth/login'
+const featuredStores = ref([])
+const isStoreLoading = ref(false)
+const storeErrorMessage = ref('')
+
+const getTextFromArray = (items) => {
+  if (!Array.isArray(items) || items.length === 0) {
+    return ''
+  }
+
+  return items.join(' · ')
+}
+
+const normalizeStore = (store) => {
+  const batterySupported = store.batterySupported ?? store.isBatterySupported ?? false
+
+  return {
+    id: store.storeId,
+    name: store.businessName,
+    category: getTextFromArray(store.categoryNames) || '카테고리 미정',
+    region: getTextFromArray(store.regionNames) || '지역 미정',
+    description: store.storeDesc,
+    status: batterySupported ? '배터리 지원' : '견적 가능',
+    imageUrl: store.imageUrl,
+    imageText: store.businessName,
+    headcountText: `${store.minHeadcount}명 ~ ${store.maxHeadcount}명`,
+  }
+}
+
+const loadFeaturedStores = async () => {
+  isStoreLoading.value = true
+  storeErrorMessage.value = ''
+
+  try {
+    const response = await myAxios.get('/api/allStores')
+    const storeList = Array.isArray(response.data?.data) ? response.data.data : []
+
+    featuredStores.value = storeList
+      .slice(0, 4)
+      .map(normalizeStore)
+      .filter((store) => store.id)
+  } catch (error) {
+    console.error(error)
+    storeErrorMessage.value = '업체 정보를 불러오지 못했습니다.'
+  } finally {
+    isStoreLoading.value = false
+  }
+}
+
+onMounted(() => {
+  loadFeaturedStores()
 })
-
-const featuredStores = [
-  {
-    id: 1,
-    name: '든든한 한식 밥차',
-    category: '한식 · 밥차',
-    region: '대구',
-    description: '기업 행사와 단체 식사에 적합한 한식 중심 밥차입니다.',
-    status: '견적 가능',
-    imageText: 'KOREAN FOOD',
-  },
-  {
-    id: 2,
-    name: '스트릿 타코 트럭',
-    category: '양식 · 푸드트럭',
-    region: '부산',
-    description: '학교 축제와 야외 행사에 잘 어울리는 캐주얼 푸드트럭입니다.',
-    status: '인기 업체',
-    imageText: 'TACO TRUCK',
-  },
-  {
-    id: 3,
-    name: '커피 앤 디저트',
-    category: '디저트 · 음료',
-    region: '서울',
-    description: '행사장 휴식 공간에 어울리는 커피와 디저트 전문 트럭입니다.',
-    status: '예약 가능',
-    imageText: 'DESSERT',
-  },
-  {
-    id: 4,
-    name: '분식 스테이션',
-    category: '분식 · 푸드트럭',
-    region: '대전',
-    description: '축제와 야외 이벤트에 어울리는 분식 메뉴를 제공합니다.',
-    status: '견적 가능',
-    imageText: 'SNACK BAR',
-  },
-]
 
 const howItWorks = [
   {
     step: 1,
     emoji: '📋',
     title: '조건 입력',
-    description: '행사 지역, 날짜, 예상 인원, 예산을 입력합니다.',
+    description: '행사 지역, 날짜, 예상 인원, 메뉴 카테고리, 전기 사용 여부를 입력합니다.',
   },
   {
     step: 2,
@@ -115,7 +123,6 @@ const useCases = [
 
 <template>
   <div class="page home-page">
-
     <main>
       <!-- ① 히어로 섹션 -->
       <section class="home-section hero-section">
@@ -141,7 +148,7 @@ const useCases = [
             </p>
 
             <div class="hero-actions">
-              <RouterLink :to="vendorLink" class="hero-main-btn">
+              <RouterLink :to="checklistLink" class="hero-main-btn">
                 업체 둘러보기
               </RouterLink>
             </div>
@@ -197,14 +204,35 @@ const useCases = [
             </p>
           </div>
 
-          <div class="featured-grid">
+          <div v-if="isStoreLoading" class="store-state-message">
+            업체 정보를 불러오는 중입니다.
+          </div>
+
+          <div v-else-if="storeErrorMessage" class="store-state-message">
+            {{ storeErrorMessage }}
+          </div>
+
+          <div v-else-if="featuredStores.length === 0" class="store-state-message">
+            등록된 업체가 없습니다.
+          </div>
+
+          <div v-else class="featured-grid">
             <article
               v-for="store in featuredStores"
               :key="store.id"
               class="store-card"
             >
               <div class="store-image">
-                {{ store.imageText }}
+                <img
+                  v-if="store.imageUrl"
+                  :src="store.imageUrl"
+                  :alt="store.name"
+                  class="store-img"
+                />
+
+                <span v-else>
+                  {{ store.imageText }}
+                </span>
               </div>
 
               <div class="store-body">
@@ -222,11 +250,15 @@ const useCases = [
                   {{ store.category }} · {{ store.region }}
                 </p>
 
+                <p class="store-headcount">
+                  수용 인원 {{ store.headcountText }}
+                </p>
+
                 <p class="store-desc">
                   {{ store.description }}
                 </p>
 
-                <RouterLink :to="vendorLink" class="store-link">
+                <RouterLink :to="`/stores/${store.id}`" class="store-link">
                   상세보기
                 </RouterLink>
               </div>
@@ -234,7 +266,7 @@ const useCases = [
           </div>
 
           <div class="text-center mt-6">
-            <RouterLink :to="vendorLink" class="view-all-btn">
+            <RouterLink :to="storeListLink" class="view-all-btn">
               전체 업체 보기 →
             </RouterLink>
           </div>
@@ -285,13 +317,12 @@ const useCases = [
             원하는 행사 조건에 맞는 밥차와 푸드트럭 업체를 비교해보세요.
           </p>
 
-          <RouterLink :to="vendorLink" class="cta-link-btn">
+          <RouterLink :to="checklistLink" class="cta-link-btn">
             업체 둘러보기
           </RouterLink>
         </div>
       </section>
     </main>
-
   </div>
 </template>
 
@@ -322,9 +353,21 @@ const useCases = [
   position: relative;
   overflow: hidden;
   padding: 96px 0;
-  background:
-    radial-gradient(circle at 15% 20%, #ffedd5 0, transparent 32%),
-    linear-gradient(135deg, #fff7ed 0%, #ffffff 58%, #f8fafc 100%);
+  background: url('../../assets/Hero-img.png') center / cover no-repeat;
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.35) 0%,
+    rgba(255, 247, 237, 0.30) 40%,
+    rgba(255, 255, 255, 0.40) 100%
+  );
+  pointer-events: none;
 }
 
 .hero-content {
@@ -333,23 +376,28 @@ const useCases = [
   max-width: 760px;
   margin: 0 auto;
   padding: 64px var(--space-6);
-  border: 1.5px solid rgba(255, 255, 255, 0.9);
+  border: 1.5px solid rgba(255, 255, 255, 0.85);
   border-radius: var(--radius-xl);
-  background: rgba(255, 255, 255, 0.78);
-  box-shadow: var(--shadow-lg);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow:
+    0 18px 50px rgba(15, 23, 42, 0.08),
+    0 0 0 1px rgba(255, 255, 255, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
   text-align: center;
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(18px) saturate(1.6);
+  -webkit-backdrop-filter: blur(18px) saturate(1.6);
 }
 
 .hero-pill {
   display: inline-block;
   margin-bottom: var(--space-5);
-  padding: 8px 16px;
+  padding: 8px 18px;
   border-radius: var(--radius-full);
-  background: #ffedd5;
+  background: linear-gradient(135deg, #ffedd5 0%, #fef3c7 100%);
   color: var(--color-primary);
   font-size: var(--text-sm);
   font-weight: 800;
+  box-shadow: 0 2px 8px rgba(255, 107, 0, 0.10);
 }
 
 .hero-title {
@@ -362,7 +410,22 @@ const useCases = [
 }
 
 .hero-title span {
-  color: var(--color-primary);
+  background: linear-gradient(135deg, #ff6b00 0%, #f43f5e 40%, #a855f7 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 200% 200%;
+  animation: gradientShift 6s ease-in-out infinite;
+}
+
+@keyframes gradientShift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
 }
 
 .hero-desc {
@@ -402,44 +465,20 @@ const useCases = [
 .hero-main-btn {
   min-width: 180px;
   padding: 16px 34px;
-  background: var(--color-primary);
+  background: linear-gradient(135deg, #ff6b00 0%, #f97316 50%, #fb923c 100%);
   color: var(--color-white);
-  box-shadow: var(--shadow-primary);
+  box-shadow:
+    0 12px 28px rgba(255, 107, 0, 0.30),
+    0 0 0 1px rgba(255, 107, 0, 0.15);
 }
 
 .hero-main-btn:hover {
-  background: var(--color-primary-hover);
+  background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
   color: var(--color-white);
   transform: translateY(-2px);
-  opacity: 0.96;
-}
-
-.hero-float {
-  position: absolute;
-  z-index: 1;
-  font-size: 42px;
-  opacity: 0.34;
-  user-select: none;
-}
-
-.hero-float--1 {
-  top: 18%;
-  left: 10%;
-}
-
-.hero-float--2 {
-  top: 20%;
-  right: 12%;
-}
-
-.hero-float--3 {
-  bottom: 18%;
-  left: 16%;
-}
-
-.hero-float--4 {
-  right: 18%;
-  bottom: 20%;
+  box-shadow:
+    0 16px 36px rgba(255, 107, 0, 0.38),
+    0 0 0 1px rgba(255, 107, 0, 0.20);
 }
 
 /* ============================
@@ -558,11 +597,19 @@ const useCases = [
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
   background: #fed7aa;
   color: #9a3412;
   font-size: var(--text-sm);
   font-weight: 900;
   letter-spacing: 0.08em;
+}
+
+.store-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .store-body {
@@ -600,6 +647,13 @@ const useCases = [
   font-weight: 700;
 }
 
+.store-headcount {
+  margin-top: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
 .store-desc {
   min-height: 72px;
   margin-top: var(--space-3);
@@ -623,6 +677,17 @@ const useCases = [
   color: var(--color-white);
   box-shadow: 0 14px 28px rgba(255, 107, 0, 0.28);
   transform: translateY(-2px);
+}
+
+.store-state-message {
+  padding: var(--space-8);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-white);
+  color: var(--color-text-muted);
+  font-size: var(--text-md);
+  font-weight: 700;
+  text-align: center;
 }
 
 .view-all-btn {
@@ -777,10 +842,6 @@ const useCases = [
   .featured-grid,
   .use-case-grid {
     grid-template-columns: 1fr;
-  }
-
-  .hero-float {
-    display: none;
   }
 }
 </style>
