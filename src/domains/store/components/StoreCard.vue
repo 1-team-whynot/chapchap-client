@@ -10,7 +10,7 @@ const props = defineProps({
 const imageUrl = computed(() => resolveFileUrl(props.store.imageUrl))
 const categories = computed(() => props.store.foodCategoryNames || '카테고리 미정')
 const batteryText = computed(() => (
-  props.store.isBatterySupported ? '배터리 보유' : '배터리 미보유'
+  props.store.isBatterySupported ? '전기 불필요' : '전기 필요'
 ))
 const batteryBadgeClass = computed(() => (
   props.store.isBatterySupported
