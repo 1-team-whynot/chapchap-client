@@ -8,6 +8,7 @@ export const useMyRequestsStore = defineStore('myRequestsStore', () => {
   const totalCount = ref(0)
   const currentPage = ref(1)
   const limit = ref(10)
+  const activeStatus = ref('')
   const message = ref('')
   const isLoading = ref(false)
   const errorMessage = ref('')
@@ -22,16 +23,23 @@ export const useMyRequestsStore = defineStore('myRequestsStore', () => {
     return pages
   })
 
-  const fetchMyRequests = async (page = 1) => {
+  const fetchMyRequests = async (page = 1, status = activeStatus.value) => {
     isLoading.value = true
     errorMessage.value = ''
+    activeStatus.value = status
 
     try {
+      const params = {
+        page,
+        limit: limit.value,
+      }
+
+      if (status) {
+        params.status = status
+      }
+
       const response = await myAxios.get('/api/reservations/my', {
-        params: {
-          page,
-          limit: limit.value,
-        },
+        params,
       })
       const data = response.data?.data ?? {}
 
@@ -59,7 +67,13 @@ export const useMyRequestsStore = defineStore('myRequestsStore', () => {
     if (totalPages.value > 0 && page > totalPages.value) return
     if (page === currentPage.value) return
 
-    await fetchMyRequests(page)
+    await fetchMyRequests(page, activeStatus.value)
+  }
+
+  const changeStatus = async (status) => {
+    if (status === activeStatus.value) return
+
+    await fetchMyRequests(1, status)
   }
 
   return {
@@ -67,6 +81,7 @@ export const useMyRequestsStore = defineStore('myRequestsStore', () => {
     totalCount,
     currentPage,
     limit,
+    activeStatus,
     message,
     isLoading,
     errorMessage,
@@ -74,5 +89,6 @@ export const useMyRequestsStore = defineStore('myRequestsStore', () => {
     pageRange,
     fetchMyRequests,
     changePage,
+    changeStatus,
   }
 })

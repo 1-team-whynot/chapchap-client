@@ -23,7 +23,17 @@ defineEmits(['close'])
       class="modal-overlay"
       @click.self="$emit('close')"
     >
-      <div :class="['modal-box', { 'modal-box--sm': size === 'sm' }]">
+      <div
+        role="dialog"
+        aria-modal="true"
+        :class="[
+          'modal-box',
+          {
+            'modal-box--sm': size === 'sm',
+            'modal-box--lg': size === 'lg',
+          },
+        ]"
+      >
         <slot />
       </div>
     </div>
@@ -31,6 +41,31 @@ defineEmits(['close'])
 </template>
 
 <style scoped>
-/* 글로벌 스타일(style.css)에 .modal-overlay, .modal-box 정의되어 있습니다. */
-/* 이 컴포넌트 고유의 추가 스타일이 필요하다면 여기에 작성하세요. */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.modal-box {
+  width: min(100%, var(--w-modal));
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  border-radius: var(--radius-xl);
+  background: var(--color-white);
+  box-shadow: var(--shadow-lg);
+}
+
+.modal-box--sm {
+  width: min(100%, var(--w-modal-sm));
+}
+
+.modal-box--lg {
+  width: min(100%, var(--w-sm));
+}
 </style>

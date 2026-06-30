@@ -19,7 +19,7 @@ import ChecklistPage from '../domains/checklist/pages/checklistPage.vue'
 import StoreListPage from '../domains/store/pages/StoreListPage.vue'
 import StoreDetailPage from '../domains/store/pages/StoreDetailPage.vue'
 import ReservationCreatePage from '../domains/reservation/pages/ReservationCreatePage.vue'
-import MyRequestsPage from '../domains/reservation/pages/MyRequestsPage.vue'
+import MyRequestsPage from '../domains/myRequest/pages/MyRequestsPage.vue'
 
 const setMeta = (isAuthenticated, isGuestOnly) => {
   return {
