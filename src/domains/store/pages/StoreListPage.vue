@@ -89,7 +89,7 @@ const loadStores = async () => {
     return
   }
 
-  await storeListStore.fetchAllStores()
+  await storeListStore.fetchAllStores(storeListStore.currentPage)
 }
 
 onMounted(loadStores)
