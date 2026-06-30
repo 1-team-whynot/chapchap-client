@@ -11,6 +11,8 @@ const router = useRouter()
 const myRequestsStore = useMyRequestsStore()
 
 const selectedReservation = ref(null)
+const quotationReservation = ref(null)
+const paymentConfirmReservation = ref(null)
 const createdReservationId = computed(() => String(route.query.created || ''))
 
 const statusTabs = [
@@ -20,7 +22,7 @@ const statusTabs = [
 
 const statusLabels = {
   REQUESTED: '견적 요청',
-  ESTIMATED: '견적 도착',
+  ESTIMATED: '견적도착',
   CONFIRMED: '예약 확정',
   PAYMENT_COMPLETED: '결제 완료',
   COMPLETED: '완료',
@@ -53,6 +55,20 @@ const getEventDateText = (reservation) => (
   `${reservation.eventStartDate || '-'} ~ ${reservation.eventEndDate || '-'}`
 )
 
+const getDepositAmount = (reservation) => {
+  const quotedPrice = Number(reservation?.quotedPrice ?? 0)
+
+  if (!Number.isFinite(quotedPrice) || quotedPrice <= 0) {
+    return 0
+  }
+
+  return Math.floor(quotedPrice * 0.1)
+}
+
+const canPayDeposit = (reservation) => (
+  reservation?.status === 'ESTIMATED' && getDepositAmount(reservation) > 0
+)
+
 const openReservationDetail = (reservation) => {
   selectedReservation.value = reservation
 }
@@ -61,8 +77,40 @@ const closeReservationDetail = () => {
   selectedReservation.value = null
 }
 
+const openQuotation = (reservation) => {
+  closeReservationDetail()
+  quotationReservation.value = reservation
+}
+
+const closeQuotation = () => {
+  quotationReservation.value = null
+}
+
+const openPaymentConfirm = (reservation) => {
+  closeQuotation()
+  paymentConfirmReservation.value = reservation
+}
+
+const closePaymentConfirm = () => {
+  paymentConfirmReservation.value = null
+}
+
+const goDepositPayment = (reservation) => {
+  if (!canPayDeposit(reservation)) return
+
+  router.push({
+    path: '/payment',
+    query: {
+      id: reservation.reservationId,
+      type: 'deposit',
+    },
+  })
+}
+
 const changeStatus = async (status) => {
   closeReservationDetail()
+  closeQuotation()
+  closePaymentConfirm()
   await myRequestsStore.changeStatus(status)
 }
 
@@ -154,14 +202,25 @@ onMounted(() => {
             </div>
           </div>
 
-          <BaseButton
-            variant="outline"
-            size="sm"
-            class="request-detail-button"
-            @click="openReservationDetail(reservation)"
-          >
-            상세 보기
-          </BaseButton>
+          <div class="request-card-actions">
+            <BaseButton
+              v-if="reservation.status === 'ESTIMATED'"
+              variant="primary"
+              size="sm"
+              @click="openQuotation(reservation)"
+            >
+              견적서 확인
+            </BaseButton>
+
+            <BaseButton
+              variant="outline"
+              size="sm"
+              class="request-detail-button"
+              @click="openReservationDetail(reservation)"
+            >
+              상세 보기
+            </BaseButton>
+          </div>
         </article>
       </section>
 
@@ -271,8 +330,141 @@ onMounted(() => {
           </section>
 
           <footer class="request-detail-actions">
+            <BaseButton
+              v-if="selectedReservation.status === 'ESTIMATED'"
+              variant="primary"
+              :disabled="!canPayDeposit(selectedReservation)"
+              @click="openQuotation(selectedReservation)"
+            >
+              견적서 확인
+            </BaseButton>
             <BaseButton variant="ghost" @click="closeReservationDetail">
               닫기
+            </BaseButton>
+          </footer>
+        </div>
+      </BaseModal>
+
+      <BaseModal
+        :show="Boolean(quotationReservation)"
+        size="lg"
+        @close="closeQuotation"
+      >
+        <div v-if="quotationReservation" class="request-detail-modal">
+          <header class="request-detail-header">
+            <div>
+              <span :class="['status-badge', `status-badge--${quotationReservation.status}`]">
+                {{ getStatusLabel(quotationReservation.status) }}
+              </span>
+              <h2>견적서 확인</h2>
+              <p>{{ quotationReservation.businessName }} · 요청 #{{ quotationReservation.reservationId }}</p>
+            </div>
+          </header>
+
+          <div class="estimate-summary">
+            <div class="estimate-price-box">
+              <span>견적 금액</span>
+              <strong>{{ getPriceText(quotationReservation.quotedPrice) }}</strong>
+            </div>
+
+            <div class="estimate-price-box estimate-price-box--deposit">
+              <span>계약금 금액</span>
+              <strong>{{ getPriceText(getDepositAmount(quotationReservation)) }}</strong>
+            </div>
+          </div>
+
+          <div class="request-detail-grid">
+            <div class="info-row">
+              <span class="info-label">행사 일정</span>
+              <span class="info-value">{{ getEventDateText(quotationReservation) }}</span>
+            </div>
+
+            <div class="info-row">
+              <span class="info-label">행사 장소</span>
+              <span class="info-value">{{ getAddressText(quotationReservation) || '-' }}</span>
+            </div>
+
+            <div class="info-row">
+              <span class="info-label">예상 인원</span>
+              <span class="info-value">{{ quotationReservation.headcount }}명</span>
+            </div>
+
+            <div class="info-row">
+              <span class="info-label">전기 사용</span>
+              <span class="info-value">{{ getPowerText(quotationReservation.powerAvailable) }}</span>
+            </div>
+          </div>
+
+          <section class="request-detail-section">
+            <h3>선택 메뉴</h3>
+            <div class="menu-chip-list">
+              <span
+                v-for="menu in quotationReservation.menus"
+                :key="menu.menuId"
+                class="menu-chip"
+              >
+                {{ menu.name }}
+              </span>
+              <span
+                v-if="!quotationReservation.menus || quotationReservation.menus.length === 0"
+                class="menu-chip"
+              >
+                선택 메뉴 없음
+              </span>
+            </div>
+          </section>
+
+          <p class="reservation-confirm-guide">
+            예약확정을 눌러도 아직 예약 상태는 변경되지 않습니다. 계약금 결제가 완료되면 예약 확정 상태로 전환됩니다.
+          </p>
+
+          <footer class="request-detail-actions">
+            <BaseButton variant="ghost" @click="closeQuotation">
+              닫기
+            </BaseButton>
+            <BaseButton
+              variant="primary"
+              :disabled="!canPayDeposit(quotationReservation)"
+              @click="openPaymentConfirm(quotationReservation)"
+            >
+              예약확정
+            </BaseButton>
+          </footer>
+        </div>
+      </BaseModal>
+
+      <BaseModal
+        :show="Boolean(paymentConfirmReservation)"
+        size="sm"
+        @close="closePaymentConfirm"
+      >
+        <div v-if="paymentConfirmReservation" class="payment-confirm-modal">
+          <header>
+            <h2>계약금 결제 안내</h2>
+            <p>
+              계약금 결제 완료 후 예약이 확정됩니다.
+            </p>
+          </header>
+
+          <div class="payment-confirm-amount">
+            <span>결제할 계약금</span>
+            <strong>{{ getPriceText(getDepositAmount(paymentConfirmReservation)) }}</strong>
+          </div>
+
+          <p class="reservation-confirm-guide">
+            현재 요청 상태는 견적도착으로 유지됩니다. 결제하기를 눌러 계약금 결제를 완료하면 예약 확정 상태로 변경됩니다.
+          </p>
+
+          <footer class="request-detail-actions">
+            <BaseButton variant="ghost" @click="closePaymentConfirm">
+              취소
+            </BaseButton>
+            <BaseButton
+              variant="primary"
+              :disabled="!canPayDeposit(paymentConfirmReservation)"
+              @click="goDepositPayment(paymentConfirmReservation)"
+            >
+              결제하기
             </BaseButton>
           </footer>
         </div>
@@ -373,6 +565,13 @@ onMounted(() => {
   align-self: center;
 }
 
+.request-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
 .request-detail-modal {
   display: flex;
   flex-direction: column;
@@ -455,7 +654,80 @@ onMounted(() => {
 .request-detail-actions {
   display: flex;
   justify-content: flex-end;
+  gap: var(--space-2);
   padding-top: var(--space-2);
+}
+
+.estimate-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.estimate-price-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-secondary);
+}
+
+.estimate-price-box span,
+.payment-confirm-amount span {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: 800;
+}
+
+.estimate-price-box strong,
+.payment-confirm-amount strong {
+  color: var(--color-text);
+  font-size: var(--text-4xl);
+  font-weight: 900;
+}
+
+.estimate-price-box--deposit {
+  border-color: var(--color-primary-border);
+  background: var(--color-primary-light);
+}
+
+.reservation-confirm-guide {
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-info-light);
+  color: var(--color-info);
+  font-size: var(--text-md);
+  line-height: 1.6;
+}
+
+.payment-confirm-modal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-6);
+}
+
+.payment-confirm-modal h2 {
+  color: var(--color-text);
+  font-size: var(--text-3xl);
+  font-weight: 900;
+}
+
+.payment-confirm-modal header p {
+  margin-top: var(--space-2);
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+.payment-confirm-amount {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--color-primary-light);
 }
 
 .pagination {
@@ -498,6 +770,12 @@ onMounted(() => {
 
   .request-detail-button {
     justify-self: flex-start;
+  }
+
+  .request-card-actions,
+  .estimate-summary {
+    justify-content: flex-start;
+    grid-template-columns: 1fr;
   }
 }
 </style>

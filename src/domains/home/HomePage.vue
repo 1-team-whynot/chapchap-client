@@ -19,15 +19,24 @@ const getTextFromArray = (items) => {
   return items.join(' · ')
 }
 
+const getTextValue = (value) => {
+  if (Array.isArray(value)) {
+    return getTextFromArray(value)
+  }
+
+  return value || ''
+}
+
 const normalizeStore = (store) => {
   const batterySupported = store.batterySupported ?? store.isBatterySupported ?? false
 
   return {
     id: store.storeId,
     name: store.businessName,
-    category: getTextFromArray(store.categoryNames) || '카테고리 미정',
-    region: getTextFromArray(store.regionNames) || '지역 미정',
+    category: getTextValue(store.foodCategoryNames || store.categoryNames) || '카테고리 미정',
+    region: getTextValue(store.addrBase || store.regionNames) || '지역 미정',
     description: store.storeDesc,
+    isBatterySupported: batterySupported,
     status: batterySupported ? '배터리 보유' : '배터리 미보유',
     imageUrl: resolveFileUrl(store.imageUrl),
     imageText: store.businessName,
@@ -249,7 +258,14 @@ const useCases = [
                     {{ store.name }}
                   </h3>
 
-                  <span class="store-badge">
+                  <span
+                    :class="[
+                      'store-badge',
+                      store.isBatterySupported
+                        ? 'store-badge--supported'
+                        : 'store-badge--unsupported',
+                    ]"
+                  >
                     {{ store.status }}
                   </span>
                 </div>
@@ -642,10 +658,18 @@ const useCases = [
   flex-shrink: 0;
   padding: 5px 9px;
   border-radius: var(--radius-full);
-  background: #ffedd5;
-  color: var(--color-primary);
   font-size: var(--text-sm);
   font-weight: 800;
+}
+
+.store-badge--supported {
+  background: var(--color-success-light);
+  color: var(--color-success);
+}
+
+.store-badge--unsupported {
+  background: var(--color-bg-alt);
+  color: var(--color-text-muted);
 }
 
 .store-meta {

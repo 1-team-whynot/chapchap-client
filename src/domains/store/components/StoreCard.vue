@@ -12,6 +12,11 @@ const categories = computed(() => props.store.foodCategoryNames || '카테고리
 const batteryText = computed(() => (
   props.store.isBatterySupported ? '배터리 보유' : '배터리 미보유'
 ))
+const batteryBadgeClass = computed(() => (
+  props.store.isBatterySupported
+    ? 'store-card-badge--supported'
+    : 'store-card-badge--unsupported'
+))
 </script>
 
 <template>
@@ -28,7 +33,7 @@ const batteryText = computed(() => (
     <div class="store-card-body">
       <div class="store-card-title-row">
         <h2>{{ store.businessName }}</h2>
-        <span class="store-card-badge">{{ batteryText }}</span>
+        <span :class="['store-card-badge', batteryBadgeClass]">{{ batteryText }}</span>
       </div>
 
       <p class="store-card-meta">
@@ -102,10 +107,18 @@ const batteryText = computed(() => (
   flex-shrink: 0;
   padding: 5px 9px;
   border-radius: var(--radius-full);
-  background: #fff7ed;
-  color: var(--color-primary);
   font-size: var(--text-sm);
   font-weight: 800;
+}
+
+.store-card-badge--supported {
+  background: var(--color-success-light);
+  color: var(--color-success);
+}
+
+.store-card-badge--unsupported {
+  background: var(--color-bg-alt);
+  color: var(--color-text-muted);
 }
 
 .store-card-meta,

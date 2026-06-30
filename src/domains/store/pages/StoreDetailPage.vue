@@ -22,6 +22,13 @@ const menus = computed(() => (
   Array.isArray(store.value?.menus) ? store.value.menus : []
 ))
 const storeImageUrl = computed(() => resolveFileUrl(store.value?.imageUrl))
+const storeDescription = computed(() => (
+  store.value?.storeDescription
+  || store.value?.description
+  || store.value?.intro
+  || store.value?.storeIntro
+  || ''
+))
 const selectedMenus = computed(() => (
   menus.value.filter((menu) => selectedMenuIds.value.includes(menu.menuId))
 ))
@@ -112,6 +119,9 @@ watch(
           <div class="store-hero-info">
             <p class="store-eyebrow">업체 상세</p>
             <h1>{{ store.businessName }}</h1>
+            <p class="store-description">
+              {{ storeDescription || '등록된 업체 소개가 없습니다.' }}
+            </p>
 
             <dl class="store-info-list">
               <div>
@@ -250,6 +260,13 @@ watch(
   color: var(--color-text);
   font-size: var(--text-5xl);
   font-weight: 900;
+}
+
+.store-description {
+  color: var(--color-text-sub);
+  font-size: var(--text-md);
+  line-height: 1.7;
+  white-space: pre-line;
 }
 
 .store-info-list {
