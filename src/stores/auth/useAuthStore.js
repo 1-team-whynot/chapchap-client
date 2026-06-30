@@ -15,6 +15,9 @@ export const useAuthStore = defineStore('authStore', () => {
     userInfo.value = null;
     accessToken.value = '';
     isLoggedIn.value = false;
+
+    // 💡 로그인 흔적 지우기 (추가)
+    localStorage.removeItem('isLogin');
   }
 
   const login = async (loginForm) => {
@@ -26,6 +29,9 @@ export const useAuthStore = defineStore('authStore', () => {
       accessToken.value = data.accessToken;
       userInfo.value = data.userResponse;
       isLoggedIn.value = true;
+
+      // 💡 브라우저에 로그인 흔적 남기기 (추가)
+      localStorage.setItem('isLogin', 'true');
     } catch (error) {
       throw error;
     }

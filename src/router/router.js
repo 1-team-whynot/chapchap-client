@@ -171,19 +171,30 @@ const createLoginRedirect = (to) => ({
 router.beforeEach(async (to) => {
   const authStore = useAuthStore()
 
-  if (to.meta.isAuthenticated && !authStore.isLoggedIn) {
+  // 1. 메모리는 날아갔지만(새로고침), localStorage에 로그인 흔적이 있다면 무조건 재발급 시도!
+  // (결제 성공 페이지처럼 로그인 필수 페이지가 아니더라도 재발급을 받아와야 상단바가 '로그아웃'으로 유지됩니다)
+  if (!authStore.isLoggedIn && localStorage.getItem('isLogin') === 'true') {
     try {
       await authStore.reissue()
     } catch(error) {
-      alert('로그인 시간이 만료되었습니다.\n다시 로그인 해주십시오.')
-      return createLoginRedirect(to)
+      // 재발급 실패 시(리프레시 토큰 만료 등) 찌꺼기 삭제
+      authStore.clearAuthStore()
+      
+      // 만약 가려던 곳이 로그인 필수 페이지였다면 로그인 창으로 쫓아냄
+      if (to.meta.isAuthenticated) {
+        alert('로그인 시간이 만료되었습니다.\n다시 로그인 해주십시오.')
+        return createLoginRedirect(to)
+      }
     }
   }
 
+  // 2. 위 과정을 거쳤는데도 여전히 로그아웃 상태일 때, 로그인 필수 페이지에 접근하려 한다면 차단
   if (to.meta.isAuthenticated && !authStore.isLoggedIn) {
+    alert('로그인이 필요한 서비스입니다.')
     return createLoginRedirect(to)
   }
 
+  // 3. 이미 로그인했는데, 게스트 전용 페이지(로그인, 회원가입)에 접근하려 한다면 홈으로!
   if (to.meta.isGuestOnly && authStore.isLoggedIn) {
     return getSafeRedirectPath(to.query.redirect) || '/'
   }
