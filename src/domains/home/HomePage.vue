@@ -28,7 +28,7 @@ const normalizeStore = (store) => {
     category: getTextFromArray(store.categoryNames) || '카테고리 미정',
     region: getTextFromArray(store.regionNames) || '지역 미정',
     description: store.storeDesc,
-    status: batterySupported ? '배터리 지원' : '견적 가능',
+    status: batterySupported ? '배터리 보유' : '배터리 미보유',
     imageUrl: resolveFileUrl(store.imageUrl),
     imageText: store.businessName,
     headcountText: `${store.minHeadcount}명 ~ ${store.maxHeadcount}명`,
