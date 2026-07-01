@@ -1,7 +1,7 @@
 <script setup>
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import ChangePasswordValidator from '../util/ChangePasswordValidator'
+import ChangePasswordValidator from '../util/changePasswordValidator.js'
 import { useUserStore } from '../../../stores/user/useUserStore.js'
 
 // 공용/회원가입 컴포넌트 임포트
