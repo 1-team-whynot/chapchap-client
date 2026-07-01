@@ -44,6 +44,14 @@ const amount = computed(() => {
   return paymentReady.value?.amount ?? 0
 })
 
+const eventDateText = computed(() => {
+  if (!paymentReady.value?.eventStartDate && !paymentReady.value?.eventEndDate) {
+    return '-'
+  }
+
+  return `${paymentReady.value?.eventStartDate || '-'} ~ ${paymentReady.value?.eventEndDate || '-'}`
+})
+
 const paymentTypeName = computed(() => {
   if (paymentReady.value?.paymentType === 'BALANCE') return '잔금'
   if (paymentReady.value?.paymentType === 'DEPOSIT') return '계약금'
@@ -208,7 +216,7 @@ const handlePayment = async () => {
               <div class="event-info-row">
                 <span class="event-info-label">행사 날짜</span>
                 <span class="event-info-value">
-                  {{ paymentReady?.eventDate || '-' }}
+                  {{ eventDateText }}
                 </span>
               </div>
 

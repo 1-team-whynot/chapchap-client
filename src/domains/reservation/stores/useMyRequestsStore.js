@@ -76,6 +76,11 @@ export const useMyRequestsStore = defineStore('myRequestsStore', () => {
     await fetchMyRequests(1, status)
   }
 
+  const cancelReservation = async (reservationId) => {
+    const response = await myAxios.patch(`/api/reservations/${reservationId}/cancel`)
+    return response.data?.data ?? {}
+  }
+
   return {
     reservations,
     totalCount,
@@ -90,5 +95,6 @@ export const useMyRequestsStore = defineStore('myRequestsStore', () => {
     fetchMyRequests,
     changePage,
     changeStatus,
+    cancelReservation,
   }
 })

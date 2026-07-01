@@ -13,6 +13,10 @@ const myRequestsStore = useMyRequestsStore()
 const selectedReservation = ref(null)
 const quotationReservation = ref(null)
 const paymentConfirmReservation = ref(null)
+const cancelConfirmReservation = ref(null)
+const isCanceling = ref(false)
+const cancelErrorMessage = ref('')
+const cancelSuccessMessage = ref('')
 const createdReservationId = computed(() => String(route.query.created || ''))
 
 const statusTabs = [
@@ -55,18 +59,49 @@ const getEventDateText = (reservation) => (
   `${reservation.eventStartDate || '-'} ~ ${reservation.eventEndDate || '-'}`
 )
 
-const getDepositAmount = (reservation) => {
+const getPayableAmount = (reservation) => {
+  const discountPrice = Number(reservation?.discountPrice ?? 0)
   const quotedPrice = Number(reservation?.quotedPrice ?? 0)
+
+  if (Number.isFinite(discountPrice) && discountPrice > 0) {
+    return discountPrice
+  }
 
   if (!Number.isFinite(quotedPrice) || quotedPrice <= 0) {
     return 0
   }
 
-  return Math.floor(quotedPrice * 0.1)
+  return quotedPrice
+}
+
+const getDepositAmount = (reservation) => {
+  const payableAmount = getPayableAmount(reservation)
+
+  if (payableAmount <= 0) {
+    return 0
+  }
+
+  return Math.floor(payableAmount * 0.1)
+}
+
+const getBalanceAmount = (reservation) => {
+  const payableAmount = getPayableAmount(reservation)
+  const depositAmount = getDepositAmount(reservation)
+  const balanceAmount = payableAmount - depositAmount
+
+  return balanceAmount > 0 ? balanceAmount : 0
 }
 
 const canPayDeposit = (reservation) => (
   reservation?.status === 'ESTIMATED' && getDepositAmount(reservation) > 0
+)
+
+const canPayBalance = (reservation) => (
+  reservation?.status === 'CONFIRMED' && getBalanceAmount(reservation) > 0
+)
+
+const canCancelReservation = (reservation) => (
+  ['REQUESTED', 'ESTIMATED', 'CONFIRMED'].includes(reservation?.status)
 )
 
 const openReservationDetail = (reservation) => {
@@ -95,6 +130,21 @@ const closePaymentConfirm = () => {
   paymentConfirmReservation.value = null
 }
 
+const openCancelConfirm = (reservation) => {
+  closeReservationDetail()
+  closeQuotation()
+  closePaymentConfirm()
+  cancelErrorMessage.value = ''
+  cancelConfirmReservation.value = reservation
+}
+
+const closeCancelConfirm = () => {
+  if (isCanceling.value) return
+
+  cancelConfirmReservation.value = null
+  cancelErrorMessage.value = ''
+}
+
 const goDepositPayment = (reservation) => {
   if (!canPayDeposit(reservation)) return
 
@@ -107,11 +157,51 @@ const goDepositPayment = (reservation) => {
   })
 }
 
+const goBalancePayment = (reservation) => {
+  if (!canPayBalance(reservation)) return
+
+  router.push({
+    path: '/payment',
+    query: {
+      id: reservation.reservationId,
+      type: 'balance',
+    },
+  })
+}
+
 const changeStatus = async (status) => {
   closeReservationDetail()
   closeQuotation()
   closePaymentConfirm()
+  closeCancelConfirm()
   await myRequestsStore.changeStatus(status)
+}
+
+const confirmCancelReservation = async () => {
+  if (!cancelConfirmReservation.value || isCanceling.value) return
+
+  try {
+    isCanceling.value = true
+    cancelErrorMessage.value = ''
+    cancelSuccessMessage.value = ''
+
+    const result = await myRequestsStore.cancelReservation(cancelConfirmReservation.value.reservationId)
+    const refundText = result.expectedRefundAmount > 0
+      ? ` 예상 환불액은 ${getPriceText(result.expectedRefundAmount)}입니다.`
+      : ''
+
+    cancelSuccessMessage.value = `${result.message || '예약이 취소되었습니다.'}${refundText}`
+    cancelConfirmReservation.value = null
+    await myRequestsStore.fetchMyRequests(myRequestsStore.currentPage, myRequestsStore.activeStatus)
+  } catch (error) {
+    console.error(error)
+    cancelErrorMessage.value =
+      error.response?.data?.data ||
+      error.response?.data?.message ||
+      '예약 취소 처리 중 오류가 발생했습니다.'
+  } finally {
+    isCanceling.value = false
+  }
 }
 
 onMounted(() => {
@@ -134,6 +224,10 @@ onMounted(() => {
 
       <p v-if="createdReservationId" class="alert alert--success">
         견적 요청이 접수되었습니다. 요청 번호 {{ createdReservationId }}번을 확인해 주세요.
+      </p>
+
+      <p v-if="cancelSuccessMessage" class="alert alert--success">
+        {{ cancelSuccessMessage }}
       </p>
 
       <div class="status-tabs" role="tablist" aria-label="내 요청 상태 필터">
@@ -210,6 +304,25 @@ onMounted(() => {
               @click="openQuotation(reservation)"
             >
               견적서 확인
+            </BaseButton>
+
+            <BaseButton
+              v-if="reservation.status === 'CONFIRMED'"
+              variant="primary"
+              size="sm"
+              :disabled="!canPayBalance(reservation)"
+              @click="goBalancePayment(reservation)"
+            >
+              잔금 결제
+            </BaseButton>
+
+            <BaseButton
+              v-if="canCancelReservation(reservation)"
+              variant="danger"
+              size="sm"
+              @click="openCancelConfirm(reservation)"
+            >
+              예약 취소
             </BaseButton>
 
             <BaseButton
@@ -303,6 +416,11 @@ onMounted(() => {
               <span class="info-label">할인 금액</span>
               <span class="info-value">{{ getPriceText(selectedReservation.discountPrice) }}</span>
             </div>
+
+            <div class="info-row">
+              <span class="info-label">잔금 금액</span>
+              <span class="info-value">{{ getPriceText(getBalanceAmount(selectedReservation)) }}</span>
+            </div>
           </div>
 
           <section class="request-detail-section">
@@ -337,6 +455,21 @@ onMounted(() => {
               @click="openQuotation(selectedReservation)"
             >
               견적서 확인
+            </BaseButton>
+            <BaseButton
+              v-if="selectedReservation.status === 'CONFIRMED'"
+              variant="primary"
+              :disabled="!canPayBalance(selectedReservation)"
+              @click="goBalancePayment(selectedReservation)"
+            >
+              잔금 결제
+            </BaseButton>
+            <BaseButton
+              v-if="canCancelReservation(selectedReservation)"
+              variant="danger"
+              @click="openCancelConfirm(selectedReservation)"
+            >
+              예약 취소
             </BaseButton>
             <BaseButton variant="ghost" @click="closeReservationDetail">
               닫기
@@ -465,6 +598,51 @@ onMounted(() => {
               @click="goDepositPayment(paymentConfirmReservation)"
             >
               결제하기
+            </BaseButton>
+          </footer>
+        </div>
+      </BaseModal>
+
+      <BaseModal
+        :show="Boolean(cancelConfirmReservation)"
+        size="sm"
+        @close="closeCancelConfirm"
+      >
+        <div v-if="cancelConfirmReservation" class="cancel-confirm-modal">
+          <header>
+            <h2>예약 취소</h2>
+            <p>
+              예약을 취소하면 현재 요청 상태가 취소로 변경됩니다.
+            </p>
+          </header>
+
+          <div class="cancel-confirm-summary">
+            <span>취소할 요청</span>
+            <strong>{{ cancelConfirmReservation.businessName }} · 요청 #{{ cancelConfirmReservation.reservationId }}</strong>
+          </div>
+
+          <p class="reservation-confirm-guide">
+            행사일 기준 5영업일 전까지만 취소할 수 있습니다. 계약금 결제 건은 취소 시점에 따라 환불 예상액이 계산됩니다.
+          </p>
+
+          <p v-if="cancelErrorMessage" class="alert alert--error">
+            {{ cancelErrorMessage }}
+          </p>
+
+          <footer class="request-detail-actions">
+            <BaseButton
+              variant="ghost"
+              :disabled="isCanceling"
+              @click="closeCancelConfirm"
+            >
+              닫기
+            </BaseButton>
+            <BaseButton
+              variant="danger-filled"
+              :disabled="isCanceling"
+              @click="confirmCancelReservation"
+            >
+              {{ isCanceling ? '취소 처리 중' : '예약 취소' }}
             </BaseButton>
           </footer>
         </div>
@@ -675,14 +853,16 @@ onMounted(() => {
 }
 
 .estimate-price-box span,
-.payment-confirm-amount span {
+.payment-confirm-amount span,
+.cancel-confirm-summary span {
   color: var(--color-text-muted);
   font-size: var(--text-sm);
   font-weight: 800;
 }
 
 .estimate-price-box strong,
-.payment-confirm-amount strong {
+.payment-confirm-amount strong,
+.cancel-confirm-summary strong {
   color: var(--color-text);
   font-size: var(--text-4xl);
   font-weight: 900;
@@ -702,32 +882,49 @@ onMounted(() => {
   line-height: 1.6;
 }
 
-.payment-confirm-modal {
+.payment-confirm-modal,
+.cancel-confirm-modal {
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
   padding: var(--space-6);
 }
 
-.payment-confirm-modal h2 {
+.payment-confirm-modal h2,
+.cancel-confirm-modal h2 {
   color: var(--color-text);
   font-size: var(--text-3xl);
   font-weight: 900;
 }
 
-.payment-confirm-modal header p {
+.payment-confirm-modal header p,
+.cancel-confirm-modal header p {
   margin-top: var(--space-2);
   color: var(--color-text-muted);
   line-height: 1.6;
 }
 
-.payment-confirm-amount {
+.payment-confirm-amount,
+.cancel-confirm-summary {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
   padding: var(--space-4);
   border-radius: var(--radius-lg);
+}
+
+.payment-confirm-amount {
   background: var(--color-primary-light);
+}
+
+.cancel-confirm-summary {
+  background: var(--color-danger-light);
+}
+
+.cancel-confirm-summary strong {
+  color: var(--color-danger);
+  font-size: var(--text-lg);
+  line-height: 1.5;
 }
 
 .pagination {

@@ -17,7 +17,7 @@ export const confirmPayment = ({ paymentKey, orderId, amount }) => {
 
 // 더미 결제 confirm을 따로 쓸 경우
 export const mockConfirmPayment = ({ orderId, amount }) => {
-  return myAxios.post('/api/payments/mock/confirm', {
+  return myAxios.post('/api/payments/mock-confirm', {
     orderId,
     amount,
   })

@@ -132,13 +132,13 @@ const routes = [
     path: '/payment',
     name: 'Payment',
     component: PaymentPage,
-    meta: setMeta(false, false),
+    meta: setMeta(true, false),
   },
   {
     path: '/payment/success',
     name: 'PaymentSuccess',
     component: PaymentSuccessPage,
-    meta: setMeta(false, false),
+    meta: setMeta(true, false),
   },
   {
     path: '/payment/fail',
@@ -150,7 +150,7 @@ const routes = [
     path: '/payment/complete',
     name: 'PaymentComplete',
     component: PaymentCompletePage,
-    meta: setMeta(false, false),
+    meta: setMeta(true, false),
   },
 ]
 

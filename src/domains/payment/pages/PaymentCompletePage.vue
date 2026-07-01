@@ -26,13 +26,11 @@ const statusBadgeClass = computed(() => {
 })
 
 const goReservation = () => {
-  // 내 예약 페이지가 아직 없으면 임시로 payment로 이동
-  router.push('/payment')
+  router.push('/my-requests')
 }
 
 const goNewRequest = () => {
-  // 견적 요청 페이지가 아직 없으면 임시로 payment로 이동
-  router.push('/payment')
+  router.push('/storelist')
 }
 </script>
 
