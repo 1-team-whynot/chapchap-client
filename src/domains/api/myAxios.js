@@ -43,7 +43,8 @@ myAxios.interceptors.response.use(
   (response) => response,
   async (error) => {
     // 401 Unauthorized (인증 만료 또는 유효하지 않은 토큰 에러) 감지 시
-    if (error.response && error.response.status === 401) {
+    // 단, 로그인 API(/api/auth/login)의 401 에러는 로그인 폼 자체에서 처리하므로 제외
+    if (error.response && error.response.status === 401 && !error.config?.url?.includes('/api/auth/login')) {
       const authStore = useAuthStore();
       
       authStore.clearAuthStore(); // Pinia 상태 리셋

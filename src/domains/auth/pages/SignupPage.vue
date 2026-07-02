@@ -35,19 +35,67 @@ const isFormComplete = computed(() => {
 });
 
 const emailError = ref('');
+const passwordError = ref('');
+const passwordChkError = ref('');
+const nameError = ref('');
+const phoneError = ref('');
 const isEmailChecked = ref(false);
 const isCheckingEmail = ref(false);
 
-// 이메일 입력값이 변경되면 중복확인 상태를 false로 초기화
-watch(() => signupForm.email, () => {
-  isEmailChecked.value = false
+// 이메일 실시간 검사
+watch(() => signupForm.email, (newVal) => {
+  isEmailChecked.value = false;
+  if (!newVal) {
+    emailError.value = '';
+  } else {
+    emailError.value = signupValidator.email(newVal);
+  }
+});
+
+// 비밀번호 실시간 검사
+watch(() => signupForm.password, (newVal) => {
+  if (!newVal) {
+    passwordError.value = '';
+  } else {
+    passwordError.value = signupValidator.password(newVal);
+  }
+  if (signupForm.passwordChk) {
+    passwordChkError.value = signupValidator.passwordChk(newVal, signupForm.passwordChk);
+  }
+});
+
+// 비밀번호 확인 실시간 검사
+watch(() => signupForm.passwordChk, (newVal) => {
+  if (!newVal) {
+    passwordChkError.value = '';
+  } else {
+    passwordChkError.value = signupValidator.passwordChk(signupForm.password, newVal);
+  }
+});
+
+// 이름 실시간 검사
+watch(() => signupForm.name, (newVal) => {
+  if (!newVal) {
+    nameError.value = '';
+  } else {
+    nameError.value = signupValidator.name(newVal);
+  }
+});
+
+// 연락처 실시간 검사
+watch(() => signupForm.phone, (newVal) => {
+  if (!newVal) {
+    phoneError.value = '';
+  } else {
+    phoneError.value = signupValidator.phone(newVal);
+  }
 });
 
 const handleCheckDuplicateEmail = async () => {
   emailError.value = ''
   isEmailChecked.value = false
 
-  const emailValError = email(signupForm.email)
+  const emailValError = signupValidator.email(signupForm.email)
   if (emailValError) {
     emailError.value = emailValError
     return
@@ -76,18 +124,22 @@ const handleSubmit = async () => {
     return
   }
 
-  const validationList = [
-    signupValidator.email(signupForm.email)
-    , signupValidator.password(signupForm.password)
-    , signupValidator.passwordChk(signupForm.password, signupForm.passwordChk)
-    , signupValidator.name(signupForm.name)
-    , signupValidator.phone(signupForm.phone)
-  ];
+  // 최종 제출 전 전체 유효성 검사 갱신
+  emailError.value = signupValidator.email(signupForm.email);
+  passwordError.value = signupValidator.password(signupForm.password);
+  passwordChkError.value = signupValidator.passwordChk(signupForm.password, signupForm.passwordChk);
+  nameError.value = signupValidator.name(signupForm.name);
+  phoneError.value = signupValidator.phone(signupForm.phone);
 
-  const errorList = validationList.filter(val => val);
+  const errorList = [
+    emailError.value,
+    passwordError.value,
+    passwordChkError.value,
+    nameError.value,
+    phoneError.value
+  ].filter(val => val);
 
   if(errorList.length > 0) {
-    alert(errorList.join('\n'));
     return;
   }
 
@@ -99,7 +151,11 @@ const handleSubmit = async () => {
   } catch (error) {
     const data = error.response?.data;
     if(data) {
-      if(data.code === 'E11') {
+      if(data.code === 'E30' && data.message === 'USER_PHONE_DUPLICATED') {
+        phoneError.value = data.data || '이미 가입된 번호입니다.';
+      } else if(data.code === 'E30' && data.message === 'USER_EMAIL_DUPLICATED') {
+        emailError.value = data.data || '이미 가입된 이메일입니다.';
+      } else if(data.code === 'E11') {
         alert(data.data);
       } else if(data.code === 'E21') {
         alert('잘못된 양식입니다.')
@@ -153,6 +209,7 @@ const handleSubmit = async () => {
             require
           />
         </div>
+        <p v-if="passwordError" class="error-msg">{{ passwordError }}</p>
 
         <div class="input-container">
           <AuthInputComponent
@@ -163,6 +220,7 @@ const handleSubmit = async () => {
             require
           />
         </div>
+        <p v-if="passwordChkError" class="error-msg">{{ passwordChkError }}</p>
         
         <div class="input-container">
           <AuthInputComponent
@@ -172,6 +230,7 @@ const handleSubmit = async () => {
             require
           />
         </div>
+        <p v-if="nameError" class="error-msg">{{ nameError }}</p>
 
         <div class="input-container">
           <AuthInputComponent
@@ -182,6 +241,7 @@ const handleSubmit = async () => {
             require
           />
         </div>
+        <p v-if="phoneError" class="error-msg">{{ phoneError }}</p>
 
         <BaseButton
           type="submit"
@@ -241,5 +301,12 @@ const handleSubmit = async () => {
 .check-btn {
   height: 41px;
   align-self: self-end;
+}
+
+.error-msg {
+  font-size: 0.8rem;
+  color: #ff0000;
+  margin-top: -8px;
+  margin-bottom: -2px;
 }
 </style>
